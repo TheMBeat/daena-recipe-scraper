@@ -12,6 +12,9 @@ const allRecipes = url => {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
           const $ = cheerio.load(html);
+
+          Recipe.url = url
+
           // Check if recipe is in new format
           if ((Recipe.name = $(".intro").text())) {
             newAllRecipes($, Recipe);
@@ -20,7 +23,17 @@ const allRecipes = url => {
           } else {
             reject(new Error("No recipe found on page"));
           }
-          resolve(Recipe);
+          var json_ld_obj = Recipe
+            
+            if ("@Context" in json_ld_obj === false) {
+              json_ld_obj["@Context"] = "http:\/\/schema.org"
+            }
+
+            if (!"@type" in json_ld_obj === false) {
+              json_ld_obj["@type"] = "Recipe"
+            }
+
+            resolve(json_ld_obj)
         } else {
           reject(new Error("No recipe found on page"));
         }
@@ -30,7 +43,7 @@ const allRecipes = url => {
 };
 
 const newAllRecipes = ($, Recipe) => {
-  Recipe.image = $("meta[property='og:image']").attr("content");
+  Recipe.imageUrl = $("meta[property='og:image']").attr("content");
   Recipe.name = Recipe.name.replace(/\s\s+/g, "");
 
   $(".recipe-meta-item").each((i, el) => {
@@ -44,19 +57,19 @@ const newAllRecipes = ($, Recipe) => {
       .replace(/\s\s+/g, "");
     switch (title) {
       case "prep":
-        Recipe.time.prep = value;
+        Recipe.prepTime = value;
         break;
       case "cook":
-        Recipe.time.cook = value;
+        Recipe.cookTime = value;
         break;
       case "total":
-        Recipe.time.total = value;
+        Recipe.totalTime = value;
         break;
       case "additional":
-        Recipe.time.inactive = value;
+        //Recipe.time.inactive = value;
         break;
       case "Servings":
-        Recipe.servings = value;
+        Recipe.recipeYield = value;
         break;
       default:
         break;
@@ -68,23 +81,23 @@ const newAllRecipes = ($, Recipe) => {
       .text()
       .replace(/\s\s+/g, " ")
       .trim();
-    Recipe.ingredients.push(ingredient);
+    Recipe.recipeIngredient.push(ingredient);
   });
   $($(".instructions-section-item").find("p")).each((i, el) => {
     const instruction = $(el).text();
-    Recipe.instructions.push(instruction);
+    Recipe.recipeInstructions.push(instruction);
   });
 };
 
 const oldAllRecipes = ($, Recipe) => {
-  Recipe.image = $("meta[property='og:image']").attr("content");
+  Recipe.imageUrl = $("meta[property='og:image']").attr("content");
 
   $("#polaris-app label").each((i, el) => {
     const item = $(el)
       .text()
       .replace(/\s\s+/g, "");
     if (item != "Add all ingredients to list" && item != "") {
-      Recipe.ingredients.push(item);
+      Recipe.recipeIngredient.push(item);
     }
   });
 
@@ -93,13 +106,13 @@ const oldAllRecipes = ($, Recipe) => {
       .text()
       .replace(/\s\s+/g, "");
     if (step != "") {
-      Recipe.instructions.push(step);
+      Recipe.recipeInstructions.push(step);
     }
   });
-  Recipe.time.prep = $("time[itemprop=prepTime]").text();
-  Recipe.time.cook = $("time[itemprop=cookTime]").text();
-  Recipe.time.ready = $("time[itemprop=totalTime]").text();
-  Recipe.servings = $("#metaRecipeServings").attr("content");
+  Recipe.prepTime = $("time[itemprop=prepTime]").text();
+  Recipe.cookTime = $("time[itemprop=cookTime]").text();
+  Recipe.totalTime = $("time[itemprop=totalTime]").text();
+  Recipe.recipeYield = $("#metaRecipeServings").attr("content");
 };
 
 module.exports = allRecipes;

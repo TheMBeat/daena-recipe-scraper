@@ -1,60 +1,69 @@
-const request = require("request");
-const cheerio = require("cheerio");
+const request = require("request")
+const cheerio = require("cheerio")
 
-const RecipeSchema = require("../helpers/recipe-schema");
+const RecipeSchema = require("../helpers/recipe-schema")
 
 const TasteCooking = url => {
-  const Recipe = new RecipeSchema();
+  const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
     if (!url.includes("tastecooking.com/")) {
-      reject(new Error("url provided must include 'tastecooking.com/'"));
+      reject(new Error("url provided must include 'tastecooking.com/'"))
     } else {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
-          const $ = cheerio.load(html);
+          const $ = cheerio.load(html)
 
-          Recipe.image = $("meta[name='twitter:image']").attr("content");
-          Recipe.name = $("meta[property='og:title']").attr("content");
+          Recipe.url = url
+          Recipe.imageUrl = $("meta[name='twitter:image']").attr("content")
+          Recipe.name = $("meta[property='og:title']").attr("content")
 
 
           $(".recipe-body-ingredient").each((i, el) => {
             var ingredientString = ""
-            var quantity = $(el).find(".recipe-body-ingredient-quantity").find(".ingredient-number").text().trim();
-            var quant_label = $(el).find(".recipe-body-ingredient-quantity").find(".ingredient-label").text().trim();
+            var quantity = $(el).find(".recipe-body-ingredient-quantity").find(".ingredient-number").text().trim()
+            var quant_label = $(el).find(".recipe-body-ingredient-quantity").find(".ingredient-label").text().trim()
             if (quant_label === "c") {
               quant_label = "cups"
             }
-            var ingredient = $(el).find(".recipe-body-ingredient-name").text().trim();
-            ingredientString = ingredientString.concat(quantity, " ", quant_label, " ", ingredient);
-            Recipe.ingredients.push(ingredientString);
+            var ingredient = $(el).find(".recipe-body-ingredient-name").text().trim()
+            ingredientString = ingredientString.concat(quantity, " ", quant_label, " ", ingredient)
+            Recipe.recipeIngredient.push(ingredientString)
           })
 
-          Recipe.servings = $('[itemprop="recipeYield"]')
+          Recipe.recipeYield = $('[itemprop="recipeYield"]')
             .children(".recipe-stats-quantity")
             .text()
-            .trim();
+            .trim()
 
           $(".recipe-body-list-container").find("li").each((i, el) => {
-            console.log("HERE IS EL TEXT: ", $(el).text());
-            Recipe.instructions.push($(el).text().trim());
+            //console.log("HERE IS EL TEXT: ", $(el).text())
+            Recipe.recipeInstructions.push($(el).text().trim())
           })
-
-          Recipe.time = "";
 
           if (
             !Recipe.name ||
-            !Recipe.ingredients.length
+            !Recipe.recipeIngredient.length
           ) {
-            reject(new Error("No recipe found on page"));
+            reject(new Error("No recipe found on page"))
           } else {
-            resolve(Recipe);
+            var json_ld_obj = Recipe
+            
+            if ("@Context" in json_ld_obj === false) {
+              json_ld_obj["@Context"] = "http:\/\/schema.org"
+            }
+
+            if (!"@type" in json_ld_obj === false) {
+              json_ld_obj["@type"] = "Recipe"
+            }
+
+            resolve(json_ld_obj)
           }
         } else {
-          reject(new Error("No recipe found on page"));
+          reject(new Error("No recipe found on page"))
         }
-      });
+      })
     }
-  });
-};
+  })
+}
 
-module.exports = TasteCooking;
+module.exports = TasteCooking
