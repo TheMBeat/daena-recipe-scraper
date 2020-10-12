@@ -1,42 +1,39 @@
 const request = require("request");
 const cheerio = require("cheerio");
 
-const RecipeSchema = require("../../helpers/recipe-schema");
+const RecipeSchema = require("../helpers/recipe-schema");
 
-const bbcGoodFood = url => {
+const bbc = url => {
   const Recipe = new RecipeSchema();
   return new Promise((resolve, reject) => {
-    if (!url.includes("bbcgoodfood.com/recipes/")) {
-      reject(new Error("url provided must include 'bbcgoodfood.com/recipes/'"));
+    if (!url.includes("bbc.co.uk/food/recipes/")) {
+      reject(new Error("url provided must include 'bbc.co.uk/food/recipes/'"));
     } else {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
           const $ = cheerio.load(html);
 
           Recipe.image = $("meta[property='og:image']").attr("content");
-          Recipe.name = $(".recipe-header__title").text();
+          Recipe.name = $(".content-title__text").text();
 
-          $(".ingredients-list__item").each((i, el) => {
-            $(el)
-              .find("p, h2, span")
-              .remove();
+          $(".recipe-ingredients__list-item").each((i, el) => {
             Recipe.ingredients.push($(el).text());
           });
 
-          $(".method__item[itemprop=recipeInstructions]").each((i, el) => {
+          $(".recipe-method__list-item-text").each((i, el) => {
             Recipe.instructions.push($(el).text());
           });
 
-          Recipe.time.prep = $(".recipe-details__cooking-time-prep")
-            .children("span")
+          Recipe.time.prep = $(".recipe-metadata__prep-time")
+            .first()
             .text();
-          Recipe.time.cook = $(".recipe-details__cooking-time-cook")
-            .children("span")
+          Recipe.time.cook = $(".recipe-metadata__cook-time")
+            .first()
             .text();
 
-          Recipe.servings = $(".recipe-details__text[itemprop=recipeYield]")
-            .text()
-            .trim();
+          Recipe.servings = $(".recipe-metadata__serving")
+            .first()
+            .text();
 
           if (
             !Recipe.name ||
@@ -55,4 +52,4 @@ const bbcGoodFood = url => {
   });
 };
 
-module.exports = bbcGoodFood;
+module.exports = bbc;

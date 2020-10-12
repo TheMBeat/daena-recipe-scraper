@@ -3,38 +3,35 @@ const cheerio = require("cheerio");
 
 const RecipeSchema = require("../helpers/recipe-schema");
 
-const vegRecipesOfIndia = url => {
+const bonAppetit = url => {
   const Recipe = new RecipeSchema();
   return new Promise((resolve, reject) => {
-    if (!url.includes("vegrecipesofindia.com/")) {
-      reject(new Error("url provided must include 'vegrecipesofindia.com/'"));
+    if (!url.includes("bonappetit.com/recipe/")) {
+      reject(new Error("url provided must include 'bonappetit.com/recipe/'"));
     } else {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
           const $ = cheerio.load(html);
 
           Recipe.image = $("meta[property='og:image']").attr("content");
-          Recipe.name = $("meta[property='og:title']").attr("content");
+          Recipe.name = $("a.top-anchor").text();
 
-          $(".wprm-recipe-ingredients")
-            .find("li")
+          $(".ingredients")
+            .find("h3, li")
             .each((i, el) => {
-              Recipe.ingredients.push($(el).text());
+              let elText = $(el).text();
+              if (elText.length) {
+                Recipe.ingredients.push(elText);
+              }
             });
 
-          $(".wprm-recipe-instructions")
-            .find("li")
+          $(".steps-wrapper")
+            .find("h4, p")
             .each((i, el) => {
               Recipe.instructions.push($(el).text());
             });
 
-          Recipe.time.prep = $(".wprm-recipe-prep-time-container").find(".wprm-recipe-time").text();
-          Recipe.time.cook = $(".wprm-recipe-cook-time-container").find(".wprm-recipe-time").text();
-          Recipe.time.total = $(".wprm-recipe-total-time-container").find(".wprm-recipe-time").text();
-
-          Recipe.servings = $(".wprm-recipe-servings-with-unit")
-            .text()
-            .trim();
+          Recipe.servings = $(".recipe__header__servings").text();
 
           if (
             !Recipe.name ||
@@ -53,4 +50,4 @@ const vegRecipesOfIndia = url => {
   });
 };
 
-module.exports = vegRecipesOfIndia;
+module.exports = bonAppetit;

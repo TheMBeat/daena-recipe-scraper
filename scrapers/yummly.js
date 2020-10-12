@@ -1,7 +1,7 @@
-const cheerio = require("cheerio")
-const puppeteer = require("puppeteer")
+const cheerio = require("cheerio");
+const puppeteer = require("puppeteer");
 
-const RecipeSchema = require("../helpers/recipe-schema")
+const RecipeSchema = require("../helpers/recipe-schema");
 
 const blockedResourceTypes = [
   "image",
@@ -14,7 +14,7 @@ const blockedResourceTypes = [
   "imageset",
   "stylesheet",
   "font"
-]
+];
 
 const skippedResources = [
   "quantserve",
@@ -36,77 +36,76 @@ const skippedResources = [
   "zedo",
   "clicksor",
   "tiqcdn"
-]
+];
 
 const customPuppeteerFetch = async url => {
-  const browser = await puppeteer.launch()
-  const page = await browser.newPage()
-  await page.setRequestInterception(true)
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.setRequestInterception(true);
 
   page.on("request", req => {
-    const requestUrl = req._url.split("?")[0].split("#")[0]
+    const requestUrl = req._url.split("?")[0].split("#")[0];
     if (
       blockedResourceTypes.indexOf(req.resourceType()) !== -1 ||
       skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
     ) {
-      req.abort()
+      req.abort();
     } else {
-      req.continue()
+      req.continue();
     }
-  })
+  });
   try {
-    const response = await page.goto(url)
+    const response = await page.goto(url);
     if (response._status < 400) {
       try {
-        let steps = (await page.$$(".step")).length
-        let newSteps = -1
+        let steps = (await page.$$(".step")).length;
+        let newSteps = -1;
 
         while (steps >= newSteps) {
-          await page.waitFor(100)
+          await page.waitFor(100);
           await page.$eval(
             "a.view-more-steps",
             /* istanbul ignore next */ elem => elem.click()
-          )
-          newSteps = (await page.$$(".step")).length
+          );
+          newSteps = (await page.$$(".step")).length;
         }
       } finally {
-        let html = await page.content()
-        await browser.close()
-        return html
+        let html = await page.content();
+        await browser.close();
+        return html;
       }
     } else {
-      await brower.close()
-      return Promise.reject(response._status)
+      await brower.close();
+      return Promise.reject(response._status);
     }
   } catch (e) {
-    await browser.close()
-    return Promise.reject("invalid url")
+    await browser.close();
+    return Promise.reject("invalid url");
   }
-}
+};
 
 const yummy = url => {
   return new Promise(async (resolve, reject) => {
     if (!url.includes("yummly.com/recipe")) {
-      reject(new Error("url provided must include 'yummly.com/recipe'"))
+      reject(new Error("url provided must include 'yummly.com/recipe'"));
     } else {
       try {
-        const html = await customPuppeteerFetch(url)
-        const Recipe = new RecipeSchema()
-        const $ = cheerio.load(html)
+        const html = await customPuppeteerFetch(url);
+        const Recipe = new RecipeSchema();
+        const $ = cheerio.load(html);
 
-        Recipe.url = url
-        Recipe.imageUrl = $("meta[property='og:image']").attr("content")
-        Recipe.name = $(".recipe-title").text()
+        Recipe.image = $("meta[property='og:image']").attr("content");
+        Recipe.name = $(".recipe-title").text();
 
         $(".IngredientLine").each((i, el) => {
-          Recipe.recipeIngredient.push($(el).text())
-        })
+          Recipe.ingredients.push($(el).text());
+        });
 
         $(".step").each((i, el) => {
-          Recipe.recipeInstructions.push($(el).text())
-        })
+          Recipe.instructions.push($(el).text());
+        });
 
-        Recipe.totalTime =
+        Recipe.time.total =
           $("div.unit")
             .children()
             .first()
@@ -115,30 +114,20 @@ const yummy = url => {
           $("div.unit")
             .children()
             .last()
-            .text()
+            .text();
 
-        Recipe.recipeYield = $("input.font-bold").val()
+        Recipe.servings = $("input.font-bold").val();
 
-        if (!Recipe.name || !Recipe.recipeIngredient.length) {
-          reject(new Error("No recipe found on page"))
+        if (!Recipe.name || !Recipe.ingredients.length) {
+          reject(new Error("No recipe found on page"));
         } else {
-          var json_ld_obj = Recipe
-            
-          if ("@Context" in json_ld_obj === false) {
-            json_ld_obj["@Context"] = "http:\/\/schema.org"
-          }
-
-          if (!"@type" in json_ld_obj === false) {
-            json_ld_obj["@type"] = "Recipe"
-          }
-
-          resolve(json_ld_obj)
+          resolve(Recipe);
         }
       } catch (error) {
-        reject(new Error("No recipe found on page"))
+        reject(new Error("No recipe found on page"));
       }
     }
-  })
-}
+  });
+};
 
-module.exports = yummy
+module.exports = yummy;

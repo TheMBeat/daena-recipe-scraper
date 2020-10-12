@@ -1,113 +1,102 @@
-const request = require("request")
-const cheerio = require("cheerio")
+const request = require("request");
+const cheerio = require("cheerio");
 
-const RecipeSchema = require("../helpers/recipe-schema")
+const RecipeSchema = require("../helpers/recipe-schema");
 
 const smittenKitchen = url => {
-  const Recipe = new RecipeSchema()
+  const Recipe = new RecipeSchema();
   return new Promise((resolve, reject) => {
     if (!url.includes("smittenkitchen.com/")) {
-      reject(new Error("url provided must include 'smittenkitchen.com/'"))
+      reject(new Error("url provided must include 'smittenkitchen.com/'"));
     } else {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
-          const $ = cheerio.load(html)
+          const $ = cheerio.load(html);
 
-          Recipe.url = url
           if ($(".jetpack-recipe").length) {
-            newSmitten($, Recipe)
+            newSmitten($, Recipe);
           } else {
-            oldSmitten($, Recipe)
+            oldSmitten($, Recipe);
           }
           if (
             !Recipe.name ||
-            !Recipe.recipeIngredient.length ||
-            !Recipe.recipeInstructions.length
+            !Recipe.ingredients.length ||
+            !Recipe.instructions.length
           ) {
-            reject(new Error("No recipe found on page"))
+            reject(new Error("No recipe found on page"));
           } else {
-            var json_ld_obj = Recipe
-            
-            if ("@Context" in json_ld_obj === false) {
-              json_ld_obj["@Context"] = "http:\/\/schema.org"
-            }
-
-            if (!"@type" in json_ld_obj === false) {
-              json_ld_obj["@type"] = "Recipe"
-            }
-
-            resolve(json_ld_obj)
+            resolve(Recipe);
           }
         } else {
-          reject(new Error("No recipe found on page"))
+          reject(new Error("No recipe found on page"));
         }
-      })
+      });
     }
-  })
-}
+  });
+};
 
 const oldSmitten = ($, Recipe) => {
-  const body = $(".entry-content").children("p")
-  let ingredientSwitch = false
-  let orderedListRegex = new RegExp(/\d\.\s/)
-  let servingWords = ["Yield", "Serve", "Servings"]
-  let servingsRegex = new RegExp(servingWords.join("|"), "i")
+  const body = $(".entry-content").children("p");
+  let ingredientSwitch = false;
+  let orderedListRegex = new RegExp(/\d\.\s/);
+  let servingWords = ["Yield", "Serve", "Servings"];
+  let servingsRegex = new RegExp(servingWords.join("|"), "i");
 
-  Recipe.imageUrl = $("meta[property='og:image']").attr("content")
+  Recipe.image = $("meta[property='og:image']").attr("content");
   body.each((i, el) => {
     if (i === 0) {
       Recipe.name = $(el)
         .children("b")
         .text()
-        .trim()
+        .trim();
     } else if (
       $(el).children("br").length &&
       !$(el).children("b").length &&
       !orderedListRegex.test($(el).text()) &&
       !servingsRegex.test($(el).text())
     ) {
-      ingredientSwitch = true
-      let updatedIngredients = Recipe.recipeIngredient.concat(
+      ingredientSwitch = true;
+      let updatedIngredients = Recipe.ingredients.concat(
         $(el)
           .text()
           .trim()
           .split("\n")
-      )
-      Recipe.recipeIngredient = updatedIngredients
+      );
+      Recipe.ingredients = updatedIngredients;
     } else if (ingredientSwitch) {
-      let updatedInstructions = Recipe.recipeInstructions.concat(
+      let updatedInstructions = Recipe.instructions.concat(
         $(el)
           .text()
           .trim()
           .split("\n")
-      )
-      Recipe.recipeInstructions = updatedInstructions
+      );
+      Recipe.instructions = updatedInstructions;
     } else {
-      let possibleServing = $(el).text()
+      let possibleServing = $(el).text();
       if (servingsRegex.test(possibleServing)) {
         possibleServing.split("\n").forEach(line => {
           if (servingsRegex.test(line)) {
-            Recipe.recipeYield = line.substring(line.indexOf(":") + 2)
+            Recipe.servings = line.substring(line.indexOf(":") + 2);
           }
-        })
+        });
       }
     }
-  })
-}
+  });
+};
 
 const newSmitten = ($, Recipe) => {
-  Recipe.image = $("meta[property='og:image']").attr("content")
-  Recipe.name = $(".jetpack-recipe-title").text()
+  Recipe.image = $("meta[property='og:image']").attr("content");
+  Recipe.name = $(".jetpack-recipe-title").text();
 
   $(".jetpack-recipe-ingredients")
     .children("ul")
     .first()
     .children()
     .each((i, el) => {
-      Recipe.recipeIngredient.push($(el).text())
-    })
+      Recipe.ingredients.push($(el).text());
+    });
 
-  Recipe.recipeInstructions = $(".jetpack-recipe-directions")
+  Recipe.instructions = $(".jetpack-recipe-directions")
     .text()
     .split("\n")
     .filter(instruction => {
@@ -116,15 +105,15 @@ const newSmitten = ($, Recipe) => {
         instruction.includes("Do More:TwitterFacebookPinterestPrintEmail") ||
         instruction.includes("\t")
       ) {
-        return false
+        return false;
       }
-      return true
-    })
+      return true;
+    });
 
-  if (!Recipe.recipeInstructions.length) {
-    let lastIngredient = Recipe.ingredients[Recipe.ingredients.length - 1]
-    let recipeContents = $(".entry-content").text()
-    Recipe.recipeInstructions = recipeContents
+  if (!Recipe.instructions.length) {
+    let lastIngredient = Recipe.ingredients[Recipe.ingredients.length - 1];
+    let recipeContents = $(".entry-content").text();
+    Recipe.instructions = recipeContents
       .slice(
         recipeContents.indexOf(lastIngredient) + lastIngredient.length,
         recipeContents.indexOf("Rate this:")
@@ -136,19 +125,19 @@ const newSmitten = ($, Recipe) => {
           instruction.includes("Do More:TwitterFacebookPinterestPrintEmail") ||
           instruction.includes("\t")
         ) {
-          return false
+          return false;
         }
-        return true
-      })
+        return true;
+      });
   }
 
-  Recipe.totalTime = $("time[itemprop=totalTime]")
+  Recipe.time.total = $("time[itemprop=totalTime]")
     .text()
-    .replace("Time: ", "")
+    .replace("Time: ", "");
 
-  Recipe.recipeYield = $(".jetpack-recipe-servings")
+  Recipe.servings = $(".jetpack-recipe-servings")
     .text()
-    .replace("Servings: ", "")
-}
+    .replace("Servings: ", "");
+};
 
-module.exports = smittenKitchen
+module.exports = smittenKitchen;

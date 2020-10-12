@@ -1,69 +1,58 @@
-const request = require("request")
-const cheerio = require("cheerio")
+const request = require("request");
+const cheerio = require("cheerio");
 
-const RecipeSchema = require("../helpers/recipe-schema")
+const RecipeSchema = require("../helpers/recipe-schema");
 
 const alexandraCooks = url => {
-  const Recipe = new RecipeSchema()
+  const Recipe = new RecipeSchema();
   return new Promise((resolve, reject) => {
     if (!url.includes("alexandracooks.com/")) {
-      reject(new Error("url provided must include 'alexandracooks.com/'"))
+      reject(new Error("url provided must include 'alexandracooks.com/'"));
     } else {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
-          const $ = cheerio.load(html)
+          const $ = cheerio.load(html);
 
-          Recipe.url = url
-          Recipe.imageUrl = $("meta[property='og:image']").attr("content")
-          Recipe.name = $("meta[property='og:title']").attr("content")
+          Recipe.image = $("meta[property='og:image']").attr("content");
+          Recipe.name = $("meta[property='og:title']").attr("content");
 
           $(".tasty-recipes-ingredients")
             .find("li")
             .each((i, el) => {
-              Recipe.recipeIngredient.push($(el).text())
+              Recipe.ingredients.push($(el).text());
             })
 
           $(".tasty-recipes-instructions")
             .find("li")
             .each((i, el) => {
-              Recipe.recipeInstructions.push($(el).text())
-            })
+              Recipe.instructions.push($(el).text());
+            });
 
-          Recipe.prepTime = $(".tasty-recipes-prep-time").text()
-          Recipe.cookTime = $(".tasty-recipes-cook-time").text()
-          Recipe.totalTime = $(".tasty-recipes-total-time").text()
+          Recipe.time.prep = $(".tasty-recipes-prep-time").text();
+          Recipe.time.cook = $(".tasty-recipes-cook-time").text();
+          Recipe.time.total = $(".tasty-recipes-total-time").text();
 
-          $(".tasty-recipes-yield-scale").remove()
-          Recipe.recipeYield = $(".tasty-recipes-yield")
+          $(".tasty-recipes-yield-scale").remove();
+          Recipe.servings = $(".tasty-recipes-yield")
             .text()
-            .trim()
+            .trim();
 
-          
+          console.log("HERE IS RECIPE: ", Recipe)
 
           if (
             !Recipe.name ||
-            !Recipe.recipeIngredient.length
+            !Recipe.ingredients.length
           ) {
-            reject(new Error("No recipe found on page"))
+            reject(new Error("No recipe found on page"));
           } else {
-            var json_ld_obj = Recipe
-            
-            if ("@Context" in json_ld_obj === false) {
-              json_ld_obj["@Context"] = "http:\/\/schema.org"
-            }
-
-            if (!"@type" in json_ld_obj === false) {
-              json_ld_obj["@type"] = "Recipe"
-            }
-
-            resolve(json_ld_obj)
+            resolve(Recipe);
           }
         } else {
-          reject(new Error("No recipe found on page"))
+          reject(new Error("No recipe found on page"));
         }
-      })
+      });
     }
-  })
-}
+  });
+};
 
-module.exports = alexandraCooks
+module.exports = alexandraCooks;

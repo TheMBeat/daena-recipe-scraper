@@ -1,117 +1,105 @@
-const request = require("request")
-const cheerio = require("cheerio")
+const request = require("request");
+const cheerio = require("cheerio");
 
-const RecipeSchema = require("../helpers/recipe-schema")
-const baseUrl = "https://www.centraltexasfoodbank.org"
+const RecipeSchema = require("../helpers/recipe-schema");
+const baseUrl = "https://www.centraltexasfoodbank.org";
 
 const centralTexasFoodBank = url => {
-  const Recipe = new RecipeSchema()
+  const Recipe = new RecipeSchema();
   return new Promise((resolve, reject) => {
     if (!url.includes("centraltexasfoodbank.org/recipe")) {
       reject(
         new Error(
           "url provided must include 'centraltexasfoodbank.org/recipe/'"
         )
-      )
+      );
     } else {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
-          const $ = cheerio.load(html)
+          const $ = cheerio.load(html);
 
-          Recipe.url = url
-
-          Recipe.imageUrl = baseUrl + $("img[typeof='foaf:Image']").prop("src")
+          Recipe.image = baseUrl + $("img[typeof='foaf:Image']").prop("src");
           Recipe.name = $("#block-basis-page-title")
             .find("span")
             .text()
             .toLowerCase()
-            .replace(/\b\w/g, l => l.toUpperCase())
+            .replace(/\b\w/g, l => l.toUpperCase());
 
           $(".ingredients-container")
             .find(".field-item")
             .each((i, el) => {
-              Recipe.recipeIngredient.push(
+              Recipe.ingredients.push(
                 $(el)
                   .text()
                   .trim()
-              )
-            })
+              );
+            });
 
           // Try a different pattern if first one fails
-          if (!Recipe.recipeIngredient.length) {
+          if (!Recipe.ingredients.length) {
             $(".field-name-field-ingredients")
               .children("div")
               .children("div")
               .each((i, el) => {
-                Recipe.recipeIngredient.push(
+                Recipe.ingredients.push(
                   $(el)
                     .text()
                     .trim()
-                )
-              })
+                );
+              });
           }
 
           $(".bottom-section")
             .find("li")
             .each((i, el) => {
-              Recipe.recipeInstructions.push($(el).text())
-            })
+              Recipe.instructions.push($(el).text());
+            });
 
           // Try a different pattern if first one fails
-          if (!Recipe.recipeInstructions.length) {
-            let done = false
+          if (!Recipe.instructions.length) {
+            let done = false;
             $(".bottom-section")
               .find("p")
               .each((i, el) => {
                 if (!done && !$(el).children("strong").length) {
-                  let recipeInstructions = $(el)
+                  let instructions = $(el)
                     .text()
                     .trim()
-                    .replace(/\s\s+/g, " ")
-                  if (!recipeInstructions.length) done = true
-                  let instructionList = recipeInstructions
+                    .replace(/\s\s+/g, " ");
+                  if (!instructions.length) done = true;
+                  let instructionList = instructions
                     .replace(/\d+\.\s/g, "")
                     .split("\n")
-                    .filter(instruction => !!instruction.length)
-                  Recipe.recipeInstructions.push(...instructionList)
+                    .filter(instruction => !!instruction.length);
+                  Recipe.instructions.push(...instructionList);
                 }
-              })
+              });
           }
 
-          Recipe.prepTime = $(".field-name-field-prep-time")
+          Recipe.time.prep = $(".field-name-field-prep-time")
             .find("div")
-            .text()
-          Recipe.cookTime = $(".field-name-field-cooking-time")
+            .text();
+          Recipe.time.cook = $(".field-name-field-cooking-time")
             .find("div")
-            .text()
-          Recipe.recipeYield = $(".field-name-field-serves-")
+            .text();
+          Recipe.servings = $(".field-name-field-serves-")
             .find("div")
-            .text()
+            .text();
           if (
             !Recipe.name ||
-            !Recipe.recipeIngredient.length ||
-            !Recipe.recipeInstructions.length
+            !Recipe.ingredients.length ||
+            !Recipe.instructions.length
           ) {
-            reject(new Error("No recipe found on page"))
+            reject(new Error("No recipe found on page"));
           } else {
-            var json_ld_obj = Recipe
-            
-            if ("@Context" in json_ld_obj === false) {
-              json_ld_obj["@Context"] = "http:\/\/schema.org"
-            }
-
-            if (!"@type" in json_ld_obj === false) {
-              json_ld_obj["@type"] = "Recipe"
-            }
-
-            resolve(json_ld_obj)
+            resolve(Recipe);
           }
         } else {
-          reject(new Error("No recipe found on page"))
+          reject(new Error("No recipe found on page"));
         }
-      })
+      });
     }
-  })
-}
+  });
+};
 
-module.exports = centralTexasFoodBank
+module.exports = centralTexasFoodBank;

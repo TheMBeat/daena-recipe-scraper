@@ -1,80 +1,70 @@
-const request = require("request")
-const cheerio = require("cheerio")
+const request = require("request");
+const cheerio = require("cheerio");
 
-const RecipeSchema = require("../helpers/recipe-schema")
+const RecipeSchema = require("../helpers/recipe-schema");
 
 const minimalistBaker = url => {
-  const Recipe = new RecipeSchema()
+  const Recipe = new RecipeSchema();
   return new Promise((resolve, reject) => {
     if (!url.includes("minimalistbaker.com/")) {
-      reject(new Error("url provided must include 'minimalistbaker.com/'"))
+      reject(new Error("url provided must include 'minimalistbaker.com/'"));
     } else {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
-          const $ = cheerio.load(html)
+          const $ = cheerio.load(html);
+          const body = $(".wprm-recipe-container");
 
-          Recipe.url = url
-          Recipe.imageUrl = $("meta[property='og:image']").attr("content")
-          Recipe.name = $(".wprm-recipe-name").text()
+          Recipe.image = $("meta[property='og:image']").attr("content");
+          Recipe.name = $(".wprm-recipe-name").text();
 
           $(".wprm-recipe-ingredient").each((i, el) => {
-            Recipe.recipeIngredient.push(
+            Recipe.ingredients.push(
               $(el)
                 .text()
                 .replace(/\s\s+/g, " ")
                 .trim()
-            )
-          })
+            );
+          });
 
           $(".wprm-recipe-instruction-group").each((i, el) => {
             let group = $(el)
               .children(".wprm-recipe-group-name")
-              .text()
-            if (group.length) Recipe.recipeInstructions.push("# "+group)
+              .text();
+            if (group.length) Recipe.instructions.push(group);
             $(el)
               .find(".wprm-recipe-instruction-text")
               .each((i, elChild) => {
-                Recipe.recipeInstructions.push($(elChild).text())
-              })
-          })
+                Recipe.instructions.push($(elChild).text());
+              });
+          });
 
-          Recipe.prepTime = $(".wprm-recipe-time")
+          Recipe.time.prep = $(".wprm-recipe-time")
             .first()
-            .text()
-          Recipe.cookTime = $($(".wprm-recipe-time").get(1)).text()
-          Recipe.totalTime = $(".wprm-recipe-time")
+            .text();
+          Recipe.time.cook = $($(".wprm-recipe-time").get(1)).text();
+          Recipe.time.total = $(".wprm-recipe-time")
             .last()
-            .text()
+            .text();
 
-          Recipe.recipeYield = $(".wprm-recipe-servings")
+          Recipe.servings = $(".wprm-recipe-servings")
             .first()
-            .text()
+            .text();
 
           if (
             !Recipe.name ||
-            !Recipe.recipeIngredient.length ||
-            !Recipe.recipeInstructions.length
+            !Recipe.ingredients.length ||
+            !Recipe.instructions.length
           ) {
-            reject(new Error("No recipe found on page"))
+            reject(new Error("No recipe found on page"));
           } else {
-            var json_ld_obj = Recipe
-            
-            if ("@Context" in json_ld_obj === false) {
-              json_ld_obj["@Context"] = "http:\/\/schema.org"
-            }
-
-            if (!"@type" in json_ld_obj === false) {
-              json_ld_obj["@type"] = "Recipe"
-            }
-
-            resolve(json_ld_obj)
+            resolve(Recipe);
           }
         } else {
-          reject(new Error("No recipe found on page"))
+          reject(new Error("No recipe found on page"));
         }
-      })
+      });
     }
-  })
-}
+  });
+};
 
-module.exports = minimalistBaker
+module.exports = minimalistBaker;

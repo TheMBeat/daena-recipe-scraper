@@ -1,7 +1,7 @@
 const request = require("request");
 const cheerio = require("cheerio");
 
-const RecipeSchema = require("../../helpers/recipe-schema");
+const RecipeSchema = require("../helpers/recipe-schema");
 
 const oneHundredAndOne = url => {
   const Recipe = new RecipeSchema();
@@ -14,11 +14,11 @@ const oneHundredAndOne = url => {
           const $ = cheerio.load(html);
           const body = $(".wprm-recipe-container");
 
-          Recipe.imageUrl = $("meta[property='og:image']").attr("content");
+          Recipe.image = $("meta[property='og:image']").attr("content");
           Recipe.name = body.children("h2").text();
 
           $(".wprm-recipe-ingredient").each((i, el) => {
-            Recipe.recipeIngredient.push(
+            Recipe.ingredients.push(
               $(el)
                 .text()
                 .replace(/\s\s+/g, " ")
@@ -27,7 +27,7 @@ const oneHundredAndOne = url => {
           });
 
           $(".wprm-recipe-instruction-group").each((i, el) => {
-            Recipe.recipeInstruction.push(
+            Recipe.instructions.push(
               $(el)
                 .children(".wprm-recipe-group-name")
                 .text()
@@ -35,24 +35,24 @@ const oneHundredAndOne = url => {
             $(el)
               .find(".wprm-recipe-instruction-text")
               .each((i, elChild) => {
-                Recipe.recipeInstruction.push($(elChild).text());
+                Recipe.instructions.push($(elChild).text());
               });
           });
 
-          Recipe.prepTime = $($(".wprm-recipe-time").get(1)).text();
-          Recipe.totalTime = $(".wprm-recipe-time")
+          Recipe.time.prep = $($(".wprm-recipe-time").get(1)).text();
+          Recipe.time.total = $(".wprm-recipe-time")
             .last()
             .text();
 
-          Recipe.recipeYield = $(".wprm-recipe-time")
+          Recipe.servings = $(".wprm-recipe-time")
             .first()
             .text()
             .trim();
 
           if (
             !Recipe.name ||
-            !Recipe.recipeIngredient.length ||
-            !Recipe.recipeInstruction.length
+            !Recipe.ingredients.length ||
+            !Recipe.instructions.length
           ) {
             reject(new Error("No recipe found on page"));
           } else {

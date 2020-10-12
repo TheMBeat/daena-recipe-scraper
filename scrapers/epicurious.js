@@ -1,66 +1,55 @@
-const request = require("request")
-const cheerio = require("cheerio")
+const request = require("request");
+const cheerio = require("cheerio");
 
-const RecipeSchema = require("../helpers/recipe-schema")
+const RecipeSchema = require("../helpers/recipe-schema");
 
 const epicurious = url => {
-  const Recipe = new RecipeSchema()
+  const Recipe = new RecipeSchema();
   return new Promise((resolve, reject) => {
     if (!url.includes("epicurious.com/recipes/")) {
-      reject(new Error("url provided must include 'epicurious.com/recipes/'"))
+      reject(new Error("url provided must include 'epicurious.com/recipes/'"));
     } else {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
-          const $ = cheerio.load(html)
+          const $ = cheerio.load(html);
 
-          Recipe.url = url
-          Recipe.imageUrl = $("meta[property='og:image']").attr("content")
+          Recipe.image = $("meta[property='og:image']").attr("content");
           Recipe.name = $("h1[itemprop=name]")
             .text()
-            .trim()
+            .trim();
 
           $(".ingredient").each((i, el) => {
-            Recipe.recipeIngredient.push($(el).text())
-          })
+            Recipe.ingredients.push($(el).text());
+          });
 
           $(".preparation-step").each((i, el) => {
-            Recipe.recipeInstructions.push(
+            Recipe.instructions.push(
               $(el)
                 .text()
                 .replace(/\s\s+/g, "")
-            )
-          })
+            );
+          });
 
-          Recipe.prepTime = $("dd.active-time").text()
-          Recipe.totalTime = $("dd.total-time").text()
+          Recipe.time.active = $("dd.active-time").text();
+          Recipe.time.total = $("dd.total-time").text();
 
-          Recipe.servings = $("dd.yield").text()
+          Recipe.servings = $("dd.yield").text();
 
           if (
             !Recipe.name ||
-            !Recipe.recipeIngredient.length ||
-            !Recipe.recipeInstructions.length
+            !Recipe.ingredients.length ||
+            !Recipe.instructions.length
           ) {
-            reject(new Error("No recipe found on page"))
+            reject(new Error("No recipe found on page"));
           } else {
-            var json_ld_obj = Recipe
-            
-            if ("@Context" in json_ld_obj === false) {
-              json_ld_obj["@Context"] = "http:\/\/schema.org"
-            }
-
-            if (!"@type" in json_ld_obj === false) {
-              json_ld_obj["@type"] = "Recipe"
-            }
-
-            resolve(json_ld_obj)
+            resolve(Recipe);
           }
         } else {
-          reject(new Error("No recipe found on page"))
+          reject(new Error("No recipe found on page"));
         }
-      })
+      });
     }
-  })
-}
+  });
+};
 
-module.exports = epicurious
+module.exports = epicurious;

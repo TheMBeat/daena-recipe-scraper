@@ -5,17 +5,7 @@ module.exports = {
   nonRecipeUrl: "https://www.101cookbooks.com/about/",
   expectedRecipe: {
     name: "Lime & Blistered Peanut Coleslaw",
-    descriptions: "",
-    url: "",
-    image: "",
-    prepTime:"15 mins",
-    cookTime: "",
-    totalTime: "15 mins",
-    recipeCategory: "",
-    keywords: "",
-    recipeYield: "8",
-    tool:"",
-    recipeIngredient: [
+    ingredients: [
       "1 1/2 cups unsalted raw peanuts",
       "1/2 of a medium-large cabbage",
       "1 basket of tiny cherry tomatoes, washed and quartered",
@@ -26,7 +16,7 @@ module.exports = {
       "1/4 teaspoon + fine-grain sea salt",
       "honey, to taste"
     ],
-    recipeInstructions: [
+    instructions: [
       "Blister the Peanuts",
       "In a skillet or oven (350F) roast the peanuts for 5 to 10 minutes, shaking the pan once or twice along the way, until golden and blistered.",
       "Prepare the Coleslaw Ingredients",
@@ -34,12 +24,15 @@ module.exports = {
       "Make the Dressing",
       "In a separate bowl combine the lime juice, olive oil, salt. Taste, and whisk in a teaspoon or two of honey if the lime is too strong for you. Add to the cabbage mixture and gently stir to combine. Just before serving fold in the peanuts (add them too earl and they lose some of their crunch). Taste and adjust the flavor with more salt if needed."
     ],
-    id: "31110",
-    //@context: "http:\/\/schema.org",
-    // @type: "Recipe",
-    dateCreated: "0",
-    dateModified: "1591866094",
-    printImage: "true",
-    imageUrl: "https://images.101cookbooks.com/coleslaw-recipe-h.jpg?w=680",
+    time: {
+      prep: "15 mins",
+      cook: "",
+      active: "",
+      inactive: "",
+      ready: "",
+      total: "15 mins"
+    },
+    servings: "8",
+    image: "https://images.101cookbooks.com/coleslaw-recipe-h.jpg?w=680"
   }
 };

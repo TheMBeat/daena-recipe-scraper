@@ -1,37 +1,44 @@
 const request = require("request");
 const cheerio = require("cheerio");
 
-const RecipeSchema = require("../../helpers/recipe-schema");
+const RecipeSchema = require("../helpers/recipe-schema");
 
-const bonAppetit = url => {
+const fineCooking = url => {
   const Recipe = new RecipeSchema();
   return new Promise((resolve, reject) => {
-    if (!url.includes("bonappetit.com/recipe/")) {
-      reject(new Error("url provided must include 'bonappetit.com/recipe/'"));
+    if (!url.includes("finecooking.com/recipe")) {
+      reject(new Error("url provided must include 'finecooking.com/recipe'"));
     } else {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
           const $ = cheerio.load(html);
 
           Recipe.image = $("meta[property='og:image']").attr("content");
-          Recipe.name = $("a.top-anchor").text();
+          Recipe.name = $(".recipe__title").text();
 
-          $(".ingredients")
+          $(".recipe__nutrition").remove();
+          $(".recipe__ingredients")
             .find("h3, li")
             .each((i, el) => {
-              let elText = $(el).text();
-              if (elText.length) {
-                Recipe.ingredients.push(elText);
-              }
+              Recipe.ingredients.push($(el).text());
             });
 
-          $(".steps-wrapper")
-            .find("h4, p")
+          $(".wide-tags-container").remove();
+          $(".recipe__preparation")
+            .find("h3, li")
             .each((i, el) => {
               Recipe.instructions.push($(el).text());
             });
 
-          Recipe.servings = $(".recipe__header__servings").text();
+          Recipe.time.prep = $(".recipe-metadata__prep-time")
+            .first()
+            .text();
+          Recipe.time.cook = $(".recipe-metadata__cook-time")
+            .first()
+            .text();
+
+          $(".recipe__yield__heading").remove();
+          Recipe.servings = $(".recipe__yield").text();
 
           if (
             !Recipe.name ||
@@ -50,4 +57,4 @@ const bonAppetit = url => {
   });
 };
 
-module.exports = bonAppetit;
+module.exports = fineCooking;

@@ -1,69 +1,58 @@
-const request = require("request")
-const cheerio = require("cheerio")
+const request = require("request");
+const cheerio = require("cheerio");
 
-const RecipeSchema = require("../helpers/recipe-schema")
+const RecipeSchema = require("../helpers/recipe-schema");
 
 const nigella = url => {
-  const Recipe = new RecipeSchema()
+  const Recipe = new RecipeSchema();
   return new Promise((resolve, reject) => {
     if (!url.includes("nigella.com/")) {
-      reject(new Error("url provided must include 'nigella.com/'"))
+      reject(new Error("url provided must include 'nigella.com/'"));
     } else {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
-          //console.log("TRIGGERING NIGELLA SCRAPER")
-          const $ = cheerio.load(html)
+          console.log("TRIGGERING NIGELLA SCRAPER")
+          const $ = cheerio.load(html);
 
-          Recipe.url = url
-          Recipe.imageUrl = $("meta[property='og:image']").attr("content")
-          Recipe.name = $("meta[property='og:title']").attr("content")
+          Recipe.image = $("meta[property='og:image']").attr("content");
+          Recipe.name = $("meta[property='og:title']").attr("content");
 
           $("*[itemprop = 'recipeIngredient']").each((i, el) => {
-            Recipe.recipeIngredient.push(
+            Recipe.ingredients.push(
               $(el)
                 .text()
                 .trim()
-            )
-          })
+            );
+          });
 
           $("*[itemprop = 'recipeInstructions']")
             .find("ol")
             .find("li")
             .each((i, el) => {
-              Recipe.recipeInstructions.push($(el).text())
-            })
+              Recipe.instructions.push($(el).text());
+            });
 
           let servings = $("*[itemprop = 'recipeYield']").text()
           
           if (servings) {
-            Recipe.recipeYield = servings.toLowerCase().replace(":","").replace("makes","").trim()
+            Recipe.servings = servings.toLowerCase().replace(":","").replace("makes","").trim()
           }
-
+          console.log("HERE IS RECIPE: ", Recipe)
           if (
             !Recipe.name ||
-            !Recipe.recipeIngredient.length          ) 
+            !Recipe.ingredients.length          ) 
           {
-            reject(new Error("No recipe found on page", Recipe))
+            reject(new Error("No recipe found on page", Recipe));
           } else {
-            var json_ld_obj = Recipe
-            
-            if ("@Context" in json_ld_obj === false) {
-              json_ld_obj["@Context"] = "http:\/\/schema.org"
-            }
-
-            if (!"@type" in json_ld_obj === false) {
-              json_ld_obj["@type"] = "Recipe"
-            }
-
-            resolve(json_ld_obj)
+            resolve(Recipe);
           }
         } else {
           console.log("SERVER RESPONSE: ", response.statusCode)
-          reject(new Error("Server error"))
+          reject(new Error("Server error"));
         }
-      })
+      });
     }
-  })
-}
+  });
+};
 
-module.exports = nigella
+module.exports = nigella;

@@ -1,78 +1,67 @@
-const cheerio = require("cheerio")
+const cheerio = require("cheerio");
 
-const RecipeSchema = require("../helpers/recipe-schema")
-const puppeteerFetch = require("../helpers/puppeteerFetch")
+const RecipeSchema = require("../helpers/recipe-schema");
+const puppeteerFetch = require("../helpers/puppeteerFetch");
 
 const copykat = url => {
   return new Promise(async (resolve, reject) => {
     if (!url.includes("copykat.com/")) {
-      reject(new Error("url provided must include 'copykat.com/'"))
+      reject(new Error("url provided must include 'copykat.com/'"));
     } else {
       try {
-        let html = await puppeteerFetch(url)
-        var Recipe = new RecipeSchema()
-        const $ = cheerio.load(html)
+        let html = await puppeteerFetch(url);
+        var Recipe = new RecipeSchema();
+        const $ = cheerio.load(html);
 
-        Recipe.url = url
-        Recipe.imageUrl = $("meta[property='og:image']").attr("content")
+        Recipe.image = $("meta[property='og:image']").attr("content");
         Recipe.name = $(
           $(".wprm-recipe-container").find(".wprm-recipe-name")
-        ).text()
+        ).text();
 
         $(".wprm-recipe-ingredient").each((i, el) => {
-          Recipe.recipeIngredient.push(
+          Recipe.ingredients.push(
             $(el)
               .text()
               .replace(/\s\s+/g, " ")
               .trim()
-          )
-        })
+          );
+        });
 
         $(".wprm-recipe-instructions").each((i, el) => {
-          Recipe.recipeInstructions.push(
+          Recipe.instructions.push(
             $(el)
               .text()
               .replace(/\s\s+/g, " ")
               .trim()
-          )
-        })
+          );
+        });
 
-        Recipe.prepTime = $(
+        Recipe.time.prep = $(
           $(".wprm-recipe-prep-time-container").children(".wprm-recipe-time")
-        ).text()
-        Recipe.cookTime = $(
+        ).text();
+        Recipe.time.cook = $(
           $(".wprm-recipe-cook-time-container").children(".wprm-recipe-time")
-        ).text()
-        Recipe.totalTime = $(
+        ).text();
+        Recipe.time.total = $(
           $(".wprm-recipe-total-time-container").children(".wprm-recipe-time")
-        ).text()
+        ).text();
 
-        Recipe.recipeYield = $(".wprm-recipe-servings").text()
+        Recipe.servings = $(".wprm-recipe-servings").text();
 
         if (
           !Recipe.name ||
-          !Recipe.recipeIngredient.length ||
-          !Recipe.recipeInstructions.length
+          !Recipe.ingredients.length ||
+          !Recipe.instructions.length
         ) {
-          reject(new Error("No recipe found on page"))
+          reject(new Error("No recipe found on page"));
         } else {
-          var json_ld_obj = Recipe
-            
-          if ("@Context" in json_ld_obj === false) {
-            json_ld_obj["@Context"] = "http:\/\/schema.org"
-          }
-
-          if (!"@type" in json_ld_obj === false) {
-            json_ld_obj["@type"] = "Recipe"
-          }
-
-          resolve(json_ld_obj)
+          resolve(Recipe);
         }
       } catch (error) {
-        reject(new Error("No recipe found on page"))
+        reject(new Error("No recipe found on page"));
       }
     }
-  })
-}
+  });
+};
 
-module.exports = copykat
+module.exports = copykat;

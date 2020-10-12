@@ -1,88 +1,77 @@
-const cheerio = require("cheerio")
+const cheerio = require("cheerio");
 
-const RecipeSchema = require("../helpers/recipe-schema")
-const puppeteerFetch = require("../helpers/puppeteerFetch")
+const RecipeSchema = require("../helpers/recipe-schema");
+const puppeteerFetch = require("../helpers/puppeteerFetch");
 
 const damnDelicious = url => {
   return new Promise(async (resolve, reject) => {
     if (!url.includes("damndelicious.net")) {
-      reject(new Error("url provided must include 'damndelicious.net'"))
+      reject(new Error("url provided must include 'damndelicious.net'"));
     } else {
       try {
-        const html = await puppeteerFetch(url)
-        const Recipe = new RecipeSchema()
-        const $ = cheerio.load(html)
+        const html = await puppeteerFetch(url);
+        const Recipe = new RecipeSchema();
+        const $ = cheerio.load(html);
 
-        let titleDiv = $(".recipe-title")
+        let titleDiv = $(".recipe-title");
 
-        Recipe.url = url
-        Recipe.imageUrl = $("meta[property='og:image']").attr("content")
+        Recipe.image = $("meta[property='og:image']").attr("content");
         Recipe.name = $(titleDiv)
           .children("h2")
-          .text()
+          .text();
 
         $(titleDiv)
           .find("p")
           .each((i, el) => {
             let title = $(el)
               .children("strong")
-              .text()
+              .text();
             let data = $(el)
               .children("span")
-              .text()
+              .text();
 
             switch (title) {
               case "Yield:":
-                Recipe.recipeYield = data
-                break
+                Recipe.servings = data;
+                break;
               case "prep time:":
-                Recipe.prepTime = data
-                break
+                Recipe.time.prep = data;
+                break;
               case "cook time:":
-                Recipe.cookTime = data
-                break
+                Recipe.time.cook = data;
+                break;
               case "total time:":
-                Recipe.totalTime = data
-                break
+                Recipe.time.total = data;
+                break;
               default:
-                break
+                break;
             }
-          })
+          });
 
         $("li[itemprop=ingredients]").each((i, el) => {
-          Recipe.recipeIngredient.push($(el).text())
-        })
+          Recipe.ingredients.push($(el).text());
+        });
 
         $(".instructions")
           .find("li")
           .each((i, el) => {
-            Recipe.recipeInstructions.push($(el).text())
-          })
+            Recipe.instructions.push($(el).text());
+          });
 
         if (
           !Recipe.name ||
-          !Recipe.recipeIngredient.length ||
-          !Recipe.recipeInstructions.length
+          !Recipe.ingredients.length ||
+          !Recipe.instructions.length
         ) {
-          reject(new Error("No recipe found on page"))
+          reject(new Error("No recipe found on page"));
         } else {
-          var json_ld_obj = Recipe
-            
-          if ("@Context" in json_ld_obj === false) {
-            json_ld_obj["@Context"] = "http:\/\/schema.org"
-          }
-
-          if (!"@type" in json_ld_obj === false) {
-            json_ld_obj["@type"] = "Recipe"
-          }
-
-          resolve(json_ld_obj)
+          resolve(Recipe);
         }
       } catch (error) {
-        reject(new Error("No recipe found on page"))
+        reject(new Error("No recipe found on page"));
       }
     }
-  })
-}
+  });
+};
 
-module.exports = damnDelicious
+module.exports = damnDelicious;
