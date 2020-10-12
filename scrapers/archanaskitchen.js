@@ -11,14 +11,15 @@ const archanaskitchen = url => {
     } else {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
-          console.log("TRIGGERING ARCHANA SCRAPER")
+          //console.log("TRIGGERING ARCHANA SCRAPER")
           const $ = cheerio.load(html);
 
-          Recipe.image = $("meta[property='og:image']").attr("content");
+          Recipe.url = url
+          Recipe.imageUrl = $("meta[property='og:image']").attr("content");
           Recipe.name = $("meta[property='og:title']").attr("content");
 
           $("*[itemprop = 'ingredients']").each((i, el) => {
-            Recipe.ingredients.push(
+            Recipe.recipeIngredient.push(
               $(el)
                 .text()
                 .trim()
@@ -27,37 +28,47 @@ const archanaskitchen = url => {
 
           $("*[itemprop = 'recipeInstructions']")
             .each((i, el) => {
-              Recipe.instructions.push($(el).text());
+              Recipe.recipeInstructions.push($(el).text());
             });
 
           let servings = $("*[itemprop = 'recipeYield']").text()
           if (servings) {
-            Recipe.servings = servings.toLowerCase().replace(":","").replace("makes","").trim()
+            Recipe.recipeYield = servings.toLowerCase().replace(":","").replace("makes","").trim()
           }
 
           let prepTime = $("*[itemprop = 'prepTime']").text()
           if (prepTime) {
-            Recipe.time.prep = prepTime ? prepTime.match(/\d+/)[0] : ""
+            Recipe.prepTime = prepTime ? prepTime.match(/\d+/)[0] : ""
           }
 
           let cookTime = $("*[itemprop = 'cookTime']").text()
           if (cookTime) {
-            Recipe.time.cook = cookTime ? cookTime.match(/\d+/)[0] : ""
+            Recipe.cookTime = cookTime ? cookTime.match(/\d+/)[0] : ""
           }
 
           let totalTime = $("*[itemprop = 'totalTime']").text()
           if (totalTime) {
-            Recipe.time.total = totalTime ? totalTime.match(/\d+/)[0] : ""
+            Recipe.totalTime = totalTime ? totalTime.match(/\d+/)[0] : ""
           }
 
-          console.log("HERE IS RECIPE: ", Recipe)
+          //console.log("HERE IS RECIPE: ", Recipe)
           if (
             !Recipe.name ||
-            !Recipe.ingredients.length          ) 
+            !Recipe.recipeIngredient.length          ) 
           {
             reject(new Error("No recipe found on page", Recipe));
           } else {
-            resolve(Recipe);
+            var json_ld_obj = Recipe
+            
+            if ("@Context" in json_ld_obj === false) {
+              json_ld_obj["@Context"] = "http:\/\/schema.org"
+            }
+
+            if (!"@type" in json_ld_obj === false) {
+              json_ld_obj["@type"] = "Recipe"
+            }
+
+            resolve(json_ld_obj)
           }
         } else {
           console.log("SERVER RESPONSE: ", response.statusCode)

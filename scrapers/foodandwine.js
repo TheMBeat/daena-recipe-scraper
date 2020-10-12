@@ -1,68 +1,79 @@
-const request = require("request");
-const cheerio = require("cheerio");
+const request = require("request")
+const cheerio = require("cheerio")
 
-const RecipeSchema = require("../helpers/recipe-schema");
+const RecipeSchema = require("../helpers/recipe-schema")
 
 const foodAndWine = url => {
-  const Recipe = new RecipeSchema();
+  const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
     if (!url.includes("foodandwine.com/recipes/")) {
-      reject(new Error("url provided must include 'foodandwine.com/recipes/'"));
+      reject(new Error("url provided must include 'foodandwine.com/recipes/'"))
     } else {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
-          const $ = cheerio.load(html);
+          const $ = cheerio.load(html)
 
-          Recipe.image = $("meta[property='og:image']").attr("content");
-          Recipe.name = $("h1.headline").text();
+          Recipe.url = url
+          Recipe.imageUrl = $("meta[property='og:image']").attr("content")
+          Recipe.name = $("h1.headline").text()
 
           $(".ingredients")
             .find("li")
             .each((i, el) => {
-              Recipe.ingredients.push(
+              Recipe.recipeIngredient.push(
                 $(el)
                   .text()
                   .trim()
-              );
-            });
+              )
+            })
 
           $(".recipe-instructions")
             .find("p")
             .each((i, el) => {
-              Recipe.instructions.push($(el).text());
-            });
+              Recipe.recipeInstructions.push($(el).text())
+            })
 
-          let metaBody = $(".recipe-meta-item-body");
+          let metaBody = $(".recipe-meta-item-body")
 
-          Recipe.time.active = metaBody
+          Recipe.prepTime = metaBody
             .first()
             .text()
-            .trim();
-          Recipe.time.total = $(metaBody.get(1))
+            .trim()
+          Recipe.totalTime = $(metaBody.get(1))
             .text()
-            .trim();
+            .trim()
 
           let servings = metaBody
             .last()
             .text()
-            .trim();
-          Recipe.servings = servings.slice(servings.indexOf(":") + 2);
+            .trim()
+          Recipe.recipeYield = servings.slice(servings.indexOf(":") + 2)
 
           if (
             !Recipe.name ||
-            !Recipe.ingredients.length ||
-            !Recipe.instructions.length
+            !Recipe.recipeIngredient.length ||
+            !Recipe.recipeInstructions.length
           ) {
-            reject(new Error("No recipe found on page"));
+            reject(new Error("No recipe found on page"))
           } else {
-            resolve(Recipe);
+            var json_ld_obj = Recipe
+            
+            if ("@Context" in json_ld_obj === false) {
+              json_ld_obj["@Context"] = "http:\/\/schema.org"
+            }
+
+            if (!"@type" in json_ld_obj === false) {
+              json_ld_obj["@type"] = "Recipe"
+            }
+
+            resolve(json_ld_obj)
           }
         } else {
-          reject(new Error("No recipe found on page"));
+          reject(new Error("No recipe found on page"))
         }
-      });
+      })
     }
-  });
-};
+  })
+}
 
-module.exports = foodAndWine;
+module.exports = foodAndWine

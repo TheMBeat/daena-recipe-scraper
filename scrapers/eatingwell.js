@@ -1,23 +1,24 @@
-const request = require("request");
-const cheerio = require("cheerio");
+const request = require("request")
+const cheerio = require("cheerio")
 
-const RecipeSchema = require("../helpers/recipe-schema");
+const RecipeSchema = require("../helpers/recipe-schema")
 
 const eatingWell = url => {
-  const Recipe = new RecipeSchema();
+  const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
     if (!url.includes("eatingwell.com/recipe")) {
-      reject(new Error("url provided must include 'eatingwell.com/recipe'"));
+      reject(new Error("url provided must include 'eatingwell.com/recipe'"))
     } else {
       request(url, (error, response, html) => {
         if (!error && response.statusCode === 200) {
-          const $ = cheerio.load(html);
+          const $ = cheerio.load(html)
 
-          Recipe.image = $("meta[property='og:image']").attr("content");
+          Recipe.url = url
+          Recipe.imageUrl = $("meta[property='og:image']").attr("content")
           Recipe.name = $(".main-header")
             .find(".headline")
             .text()
-            .trim();
+            .trim()
 
           $(".ingredients-section__legend, .ingredients-item-name").each(
             (i, el) => {
@@ -26,71 +27,81 @@ const eatingWell = url => {
                   .attr("class")
                   .includes("visually-hidden")
               ) {
-                Recipe.ingredients.push(
+                Recipe.recipeIngredient.push(
                   $(el)
                     .text()
                     .trim()
                     .replace(/\s\s+/g, " ")
-                );
+                )
               }
             }
-          );
+          )
 
           $(".instructions-section-item").each((i, el) => {
-            Recipe.instructions.push(
+            Recipe.recipeInstructions.push(
               $(el)
                 .find("p")
                 .text()
-            );
-          });
+            )
+          })
 
           $(".recipe-meta-item").each((i, el) => {
             const title = $(el)
               .children(".recipe-meta-item-header")
               .text()
-              .replace(/\s*:|\s+(?=\s*)/g, "");
+              .replace(/\s*:|\s+(?=\s*)/g, "")
             const value = $(el)
               .children(".recipe-meta-item-body")
               .text()
-              .replace(/\s\s+/g, "");
+              .replace(/\s\s+/g, "")
             switch (title) {
               case "prep":
-                Recipe.time.prep = value;
-                break;
+                Recipe.prepTime = value
+                break
               case "cook":
-                Recipe.time.cook = value;
-                break;
+                Recipe.cookTime = value
+                break
               case "active":
-                Recipe.time.active = value;
+                //Recipe.time.active = value
               case "total":
-                Recipe.time.total = value;
-                break;
+                Recipe.totalTime = value
+                break
               case "additional":
-                Recipe.time.inactive = value;
-                break;
+                //Recipe.time.inactive = value
+                break
               case "Servings":
-                Recipe.servings = value;
-                break;
+                Recipe.recipeYield = value
+                break
               default:
-                break;
+                break
             }
-          });
+          })
 
           if (
             !Recipe.name ||
-            !Recipe.ingredients.length ||
-            !Recipe.instructions.length
+            !Recipe.recipeIngredient.length ||
+            !Recipe.recipeInstructions.length
           ) {
-            reject(new Error("No recipe found on page"));
+            reject(new Error("No recipe found on page"))
           } else {
-            resolve(Recipe);
+            var json_ld_obj = Recipe
+            
+            if ("@Context" in json_ld_obj === false) {
+              json_ld_obj["@Context"] = "http:\/\/schema.org"
+            }
+
+            if (!"@type" in json_ld_obj === false) {
+              json_ld_obj["@type"] = "Recipe"
+            }
+
+            resolve(json_ld_obj)
           }
         } else {
-          reject(new Error("No recipe found on page"));
+          reject(new Error("No recipe found on page"))
         }
-      });
+      })
     }
-  });
-};
+  })
+}
 
-module.exports = eatingWell;
+module.exports = eatingWell

@@ -13,7 +13,8 @@ const ambitiousKitchen = url => {
         const Recipe = new RecipeSchema();
         const $ = cheerio.load(html);
 
-        Recipe.image = $("meta[property='og:image']").attr("content");
+        Recipe.url = url
+        Recipe.imageUrl = $("meta[property='og:image']").attr("content");
         Recipe.name = $(".wprm-recipe-name").text();
 
         $(".wprm-recipe-ingredient").each((i, el) => {
@@ -29,39 +30,49 @@ const ambitiousKitchen = url => {
           let ingredient = `${amount} ${unit} ${name}`
             .replace(/\s\s+/g, " ")
             .trim();
-          Recipe.ingredients.push(ingredient);
+          Recipe.recipeIngredient.push(ingredient);
         });
 
         $(".wprm-recipe-instruction").each((i, el) => {
-          Recipe.instructions.push(
+          Recipe.recipeInstructions.push(
             $(el)
               .text()
               .replace(/\s\s+/g, "")
           );
         });
 
-        Recipe.time.prep =
+        Recipe.prepTime =
           $(".wprm-recipe-prep_time").text() +
             " " +
             $(".wprm-recipe-prep_time-unit").text() || "";
-        Recipe.time.cook =
+        Recipe.cookTime =
           $(".wprm-recipe-cook_time").text() +
             " " +
             $(".wprm-recipe-cook_time-unit").text() || "";
-        Recipe.time.total =
+        Recipe.totalTime =
           $(".wprm-recipe-total_time").text() +
             " " +
             $(".wprm-recipe-total_time-unit").text() || "";
-        Recipe.servings = $(".wprm-recipe-servings").text() || "";
+        Recipe.recipeYield = $(".wprm-recipe-servings").text() || "";
 
         if (
           !Recipe.name ||
-          !Recipe.ingredients.length ||
-          !Recipe.instructions.length
+          !Recipe.recipeIngredient.length ||
+          !Recipe.recipeInstructions.length
         ) {
           reject(new Error("No recipe found on page"));
         } else {
-          resolve(Recipe);
+          var json_ld_obj = Recipe
+            
+            if ("@Context" in json_ld_obj === false) {
+              json_ld_obj["@Context"] = "http:\/\/schema.org"
+            }
+
+            if (!"@type" in json_ld_obj === false) {
+              json_ld_obj["@type"] = "Recipe"
+            }
+
+            resolve(json_ld_obj)
         }
       } catch (error) {
         reject(new Error("No recipe found on page"));

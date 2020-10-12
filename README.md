@@ -1,9 +1,6 @@
-# recipe-scraper
+# recipe-scraper for Nextcloud-Cookbook
 
 **A JS package for scraping recipes from the web.**
-
-[![Build Status](https://travis-ci.org/jadkins89/Recipe-Scraper.svg?branch=master)](https://travis-ci.org/jadkins89/Recipe-Scraper)
-[![Coverage Status](https://coveralls.io/repos/github/jadkins89/Recipe-Scraper/badge.svg?branch=master)](https://coveralls.io/github/jadkins89/Recipe-Scraper?branch=master)
 
 ## Installation
 
@@ -32,42 +29,61 @@ recipeScraper("some.recipe.url").then(recipe => {
   });
 ```
 
-## Supported Websites
+## Supported Websites *
 
-- https://www.101cookbooks.com/
-- https://www.allrecipes.com/
-- https://www.ambitiouskitchen.com/
-- https://www.averiecooks.com/
-- https://www.bbc.co.uk/
-- https://www.bbcgoodfood.com/
-- https://www.bonappetit.com/
-- https://www.budgetbytes.com/
-- https://www.centraltexasfoodbank.org/
-- https://www.closetcooking.com/
-- https://cookieandkate.com/
-- https://copykat.com/
-- https://damndelicious.net/
-- http://www.eatingwell.com/
-- https://www.epicurious.com/
-- https://www.finecooking.com/
-- https://www.food.com/
-- https://www.foodandwine.com/
-- https://www.foodnetwork.com/
-- http://www.gimmesomeoven.com/
-- https://www.kitchenstories.com/
-- https://www.minimalistbaker.com/
-- https://www.myrecipes.com/
-- https://www.nomnompaleo.com/
-- https://www.omnivorescookbook.com/
-- https://www.seriouseats.com/
-- https://www.simplyrecipes.com/
-- https://smittenkitchen.com/
-- https://thepioneerwoman.com/
-- https://therealfoodrds.com/
-- https://www.thespruceeats.com/
-- https://whatsgabycooking.com/
-- https://www.woolworths.com.au/
-- https://www.yummly.com/
+All websites that deliver the recipe as structured data.
+Additionally, scrapers were implemented for the web pages listed in the table.
+
+| Website                               | JSON | Scrapper | NC Tested |
+|:--------------------------------------|:----:|:--------:|:---------:|
+| http://www.eatingwell.com/            |      |    JA    |           |
+| http://www.gimmesomeoven.com/         |      |    JA    |           |
+| https://alexandracooks.com/           |      |    JA    |           |
+| https://cookieandkate.com/            |      |    JA    |           |
+| https://copykat.com/                  |      |    JA    |           |
+| https://damndelicious.net/            |      |    JA    |      403  |
+| https://eat-this.org                  |      |   NEIN   |           |
+| https://sallys-blog.de                |      |   NEIN   |           |
+| https://smittenkitchen.com/           |      |    JA    |           |
+| https://thepioneerwoman.com/          |  √   |          |           |
+| https://therealfoodrds.com/           |      |    JA    |           |
+| https://thewoksoflife.com/            |      |    JA    |           |
+| https://whatsgabycooking.com/         |      |    JA    |           |
+| https://www.101cookbooks.com/         |  √   |          |           |
+| https://www.allrecipes.com/           |      |    JA    |           |
+| https://www.ambitiouskitchen.com/     |      |    JA    |           |
+| https://www.archanaskitchen.com       |      |    JA    |           |
+| https://www.averiecooks.com/          |  √   |          |           |
+| https://www.bbc.co.uk/                |  √   |          |           |
+| https://www.bbcgoodfood.com/          |  √   |          |           |
+| https://www.bonappetit.com/           |  √   |          |           |
+| https://www.budgetbytes.com/          |      |    JA    |           |
+| https://www.centraltexasfoodbank.org/ |      |    JA    |           |
+| https://www.chefkoch.de/              |  √   |          |           |
+| https://www.closetcooking.com/        |      |    JA    |           |
+| https://www.epicurious.com/           |      |    JA    |           |
+| https://www.food.com/                 |  √   |          |           |
+| https://www.foodandwine.com/          |      |    JA    |           |
+| https://www.foodnetwork.com/          |      |    JA    |           |
+| https://www.kitchenstories.com/       |  √   |          |           |
+| https://www.maangchi.com              |      |    JA    |           |
+| https://www.minimalistbaker.com/      |      |    JA    |           |
+| https://www.myrecipes.com/            |      |    JA    |           |
+| https://www.nigella.com/              |      |    JA    |           |
+| https://www.nomnompaleo.com/          |      |    JA    |           |
+| https://www.omnivorescookbook.com/    |      |    JA    |           |
+| https://www.saveur.com/               |      |    JA    |           |
+| https://www.seriouseats.com/          |  √   |          |           |
+| https://www.simplyrecipes.com/        |  √   |          |     403   |
+| https://www.tastecooking.com/         |      |    JA    |           |
+| https://www.thespruceeats.com/        |      |    JA    |           |
+| https://www.vegrecipesofindia.com/    |      |    JA    |           |
+| https://www.woolworths.com.au/        |      |    JA    |           |
+| https://www.yummly.com/               |      |    JA    |           |
+
+
+
+* Tested with https://search.google.com/structured-data/testing-tool?hl=de
 
 Don't see a website you'd like to scrape? Open an [issue](https://github.com/jadkins89/Recipe-Scraper/issues) and we'll do our best to add it.
 
@@ -77,19 +93,24 @@ Depending on the recipe, certain fields may be left blank. All fields are repres
 
 ```javascript
 {
-    name: "",
-    ingredients: [],
-    instructions: [],
-    servings: "",
-    image: "",
-    time: {
-      prep: "",
-      cook: "",
-      active: "",
-      inactive: "",
-      ready: "",
-      total: ""
-    }
+  "name" = "",
+  "description" = "",
+  "url" = "",
+  "prepTime" = "",
+  "cookTime" = "",
+  "totalTime" = "",
+  "recipeCategory" = "",
+  "keywords" = "",
+  "recipeYield" = "",
+  "recipeIngredient" = [],
+  "recipeInstruction" = [],
+  "id" = "",
+  "@Context" = "http:\/\/schema.org",
+  "@type" = "Recipe",
+  "dateCreated" = "0",
+  "dateModified" = "",
+  "printImage" = true,
+  "imageUrl" = "",
 }
 ```
 
