@@ -50,6 +50,8 @@ const urls = [
 ]
 
 
+
+
 urls.forEach(element => {
     // using Promise chaining
     recipeScraper(element).then(recipe => {
