@@ -45,7 +45,7 @@ const urls = [
     "https://www.woolworths.com.au/shop/recipedetail/5156/classic-guacamole",
     "https://www.yummly.com/recipe/No-Bake-Lemon-Mango-Cheesecakes-with-Speculoos-crust-781945",
     // "https://www.finecooking.com/recipe/white-chicken-chili",
-    //Response 403 "https://damndelicious.net/2019/08/20/raspberry-croissant-french-toast-bake/",
+    "https://damndelicious.net/2019/08/20/raspberry-croissant-french-toast-bake/",
     //Response 403 "https://www.simplyrecipes.com/recipes/chicken_panzanella_salad/",
 ]
 
@@ -59,7 +59,7 @@ const urls = [
 //     });
 // });
 
-recipeScraper(urls[2]).then(recipe => {
+recipeScraper(urls[41]).then(recipe => {
     console.log(JSON.stringify(recipe, undefined, 2))
 }).catch(error => {
     console.log(error)

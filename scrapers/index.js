@@ -1,6 +1,6 @@
-const parseDomain = require("parse-domain");
-const request = require("request"); // Sollte irgendwann ersetzt werden
+const parseDomain = require("parse-domain"); // In einer späteren Version hat sich etwas geändert?
 const cheerio = require("cheerio");
+const fetch = require('node-fetch')
 
 
 const domains = {
@@ -56,18 +56,30 @@ const recipeScraper = url => {
   })
 }
 
-function getJson(myUrl, callback, resolve, reject) {    
-  request(myUrl, (error, response, html) => {
-    json_ld_obj = null
-    if (!error && response.statusCode === 200) {
+function checkStatus(response) {
+  if (response.ok) { // res.status >= 200 && res.status < 300
+    return response;
+  } else {
+    console.log(myUrl + "Reponse Status: " + response.statusCode)
+    reject(new Error("No recipe found on page"))
+  }
+}
+
+function getJson(myUrl, callback, resolve, reject) {
+
+  fetch(myUrl)
+    .then(
+      checkStatus)
+    .then(res => res.text())
+    .then(html => {
+
       const $ = cheerio.load(html)
       var json_ld_elements = $("script[type='application/ld+json']").toArray()
 
       for (var i in json_ld_elements) {
         for (var j in json_ld_elements[i].children) {
           var data = json_ld_elements[i].children[j].data
-          if(data === undefined)
-          {
+          if (data === undefined) {
             continue
           }
 
@@ -79,13 +91,10 @@ function getJson(myUrl, callback, resolve, reject) {
             var json_ld_obj = JSON.parse(data)
 
             // Look through @graph field for recipe
-            if(json_ld_obj && '@graph' in json_ld_obj && Array.isArray(json_ld_obj['@graph']))
-            {
-              json_ld_obj['@graph'].forEach(graph  => {
-                if ('@type' in graph && graph["@type"] === "Recipe")
-                {
-                  if(!"@Context" in graph)
-                  {
+            if (json_ld_obj && '@graph' in json_ld_obj && Array.isArray(json_ld_obj['@graph'])) {
+              json_ld_obj['@graph'].forEach(graph => {
+                if ('@type' in graph && graph["@type"] === "Recipe") {
+                  if (!"@Context" in graph) {
                     graph["@Context"] = "http:\/\/schema.org"
                   }
 
@@ -111,13 +120,8 @@ function getJson(myUrl, callback, resolve, reject) {
         }
       }
       return callback(myUrl, html, resolve, reject)
-    } 
-    else 
-    {
-      console.log(myUrl + "Reponse Status: "+ response.statusCode)
-      reject(new Error("No recipe found on page"));
-    }
-  })
+    })
+    .catch(err => reject(new Error(err)))
 }
 
 function parseRecipe(myUrl, html, resolve, reject) {
@@ -139,7 +143,7 @@ function parseRecipe(myUrl, html, resolve, reject) {
 //TODO: Recipe-XML to JSON
 const xmlToJson = () => {
   return new Promise((resolve, reject) => {
-    
+
   })
 }
 
