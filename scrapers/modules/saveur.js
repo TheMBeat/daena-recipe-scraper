@@ -2,36 +2,32 @@ const cheerio = require("cheerio")
 
 const RecipeSchema = require("../helpers/recipe-schema")
 
-const Maangchi = url => {
+const saveur = (url, html) => {
   const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
-    if (!url.includes("maangchi.com/")) {
-      reject(new Error("url provided must include 'maangchi.com/'"))
+    if (!url.includes("saveur.com/")) {
+      reject(new Error("url provided must include 'saveur.com/'"))
     } else {
 
       const $ = cheerio.load(html)
 
       Recipe.url = url
       Recipe.imageUrl = $("meta[property='og:image']").attr("content")
-      Recipe.name = $("meta[name='twitter:title']").attr("content")
+      Recipe.name = $("meta[property='og:title']").attr("content")
 
-      $("h4").each((i, el) => {
-        if ($(el).text() === "Ingredients") {
-          $(el).nextAll("ul").each((i, ul) => {
-            $(ul).find("li").each((i, li) => {
-              Recipe.recipeIngredient.push($(li).text())
-            })
-          })
-        }
+      $(".ingredient")
+        .each((i, el) => {
+          Recipe.recipeIngredient.push($(el).text())
+        })
 
-        if ($(el).text() === "Directions") {
-          $(el).nextAll("ol").each((i, ol) => {
-            $(ol).find("li").each((i, li) => {
-              Recipe.recipeInstructions.push($(li).text())
-            })
-          })
-        }
-      })
+      $(".instruction")
+        .each((i, el) => {
+          Recipe.recipeInstructions.push($(el).text())
+        })
+
+
+      Recipe.totalTime = $(".cook-time").text().trim().replace("Time:", "")
+      Recipe.recipeYield = $(".yield").text().trim().replace("Yield:", "").replace("serves", "")
 
       if (
         !Recipe.name ||
@@ -51,8 +47,9 @@ const Maangchi = url => {
 
         resolve(json_ld_obj)
       }
+
     }
   })
 }
 
-module.exports = Maangchi
+module.exports = saveur

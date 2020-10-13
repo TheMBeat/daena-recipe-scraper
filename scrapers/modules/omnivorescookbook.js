@@ -2,7 +2,7 @@ const cheerio = require("cheerio")
 
 const RecipeSchema = require("../helpers/recipe-schema")
 
-const omnivorescookbook = url => {
+const omnivorescookbook = (url, html) => {
   const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
     if (!url.includes("omnivorescookbook.com/")) {

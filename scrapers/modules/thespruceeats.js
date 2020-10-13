@@ -2,37 +2,39 @@ const cheerio = require("cheerio")
 
 const RecipeSchema = require("../helpers/recipe-schema")
 
-const epicurious = url => {
+const theSpruceEats = (url, html) => {
   const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
-    if (!url.includes("epicurious.com/recipes/")) {
-      reject(new Error("url provided must include 'epicurious.com/recipes/'"))
+    if (!url.includes("thespruceeats.com/")) {
+      reject(new Error("url provided must include 'thespruceeats.com/'"))
     } else {
-
       const $ = cheerio.load(html)
 
       Recipe.url = url
       Recipe.imageUrl = $("meta[property='og:image']").attr("content")
-      Recipe.name = $("h1[itemprop=name]")
-        .text()
-        .trim()
+      Recipe.name = $(".heading__title").text()
 
-      $(".ingredient").each((i, el) => {
-        Recipe.recipeIngredient.push($(el).text())
-      })
-
-      $(".preparation-step").each((i, el) => {
-        Recipe.recipeInstructions.push(
+      $(".simple-list__item").each((i, el) => {
+        Recipe.recipeIngredient.push(
           $(el)
           .text()
-          .replace(/\s\s+/g, "")
+          .trim()
         )
       })
 
-      Recipe.prepTime = $("dd.active-time").text()
-      Recipe.totalTime = $("dd.total-time").text()
+      $(".section-content")
+        .find("ol")
+        .find("p")
+        .each((i, el) => {
+          Recipe.recipeInstructions.push($(el).text())
+        })
 
-      Recipe.servings = $("dd.yield").text()
+      let metaText = $(".meta-text__data")
+      Recipe.totalTime = metaText.first().text()
+      Recipe.prepTime = $(metaText.get(1)).text()
+      Recipe.cookTime = $(metaText.get(2)).text()
+
+      Recipe.servings = metaText.last().text()
 
       if (
         !Recipe.name ||
@@ -53,9 +55,8 @@ const epicurious = url => {
 
         resolve(json_ld_obj)
       }
-
     }
   })
 }
 
-module.exports = epicurious
+module.exports = theSpruceEats

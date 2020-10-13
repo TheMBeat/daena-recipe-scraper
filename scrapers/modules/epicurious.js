@@ -2,44 +2,37 @@ const cheerio = require("cheerio")
 
 const RecipeSchema = require("../helpers/recipe-schema")
 
-const budgetBytes = url => {
+const epicurious = (url, html) => {
   const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
-    if (!url.includes("budgetbytes.com/")) {
-      reject(new Error("url provided must include 'budgetbytes.com/'"))
+    if (!url.includes("epicurious.com/recipes/")) {
+      reject(new Error("url provided must include 'epicurious.com/recipes/'"))
     } else {
 
       const $ = cheerio.load(html)
 
       Recipe.url = url
-
       Recipe.imageUrl = $("meta[property='og:image']").attr("content")
-      Recipe.name = $(".wprm-recipe-name").text()
+      Recipe.name = $("h1[itemprop=name]")
+        .text()
+        .trim()
 
-      $(".wprm-recipe-ingredient-notes").remove()
-      $(".wprm-recipe-ingredient").each((i, el) => {
-        Recipe.recipeIngredient.push(
+      $(".ingredient").each((i, el) => {
+        Recipe.recipeIngredient.push($(el).text())
+      })
+
+      $(".preparation-step").each((i, el) => {
+        Recipe.recipeInstructions.push(
           $(el)
           .text()
-          .trim()
+          .replace(/\s\s+/g, "")
         )
       })
 
-      $(".wprm-recipe-instruction-text").each((i, el) => {
-        Recipe.recipeInstructions.push($(el).text())
-      })
+      Recipe.prepTime = $("dd.active-time").text()
+      Recipe.totalTime = $("dd.total-time").text()
 
-      Recipe.prepTime = $(".wprm-recipe-prep-time-label")
-        .next()
-        .text()
-      Recipe.cookTime = $(".wprm-recipe-cook-time-label")
-        .next()
-        .text()
-      Recipe.totalTime = $(".wprm-recipe-total-time-label")
-        .next()
-        .text()
-
-      Recipe.recipeYield = $(".wprm-recipe-servings").text()
+      Recipe.servings = $("dd.yield").text()
 
       if (
         !Recipe.name ||
@@ -48,7 +41,6 @@ const budgetBytes = url => {
       ) {
         reject(new Error("No recipe found on page"))
       } else {
-
         var json_ld_obj = Recipe
 
         if ("@Context" in json_ld_obj === false) {
@@ -61,8 +53,9 @@ const budgetBytes = url => {
 
         resolve(json_ld_obj)
       }
+
     }
   })
 }
 
-module.exports = budgetBytes
+module.exports = epicurious

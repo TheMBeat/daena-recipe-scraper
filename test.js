@@ -1,6 +1,6 @@
 ﻿
 // import the module
-const recipeScraper = require("./scrapers/index.js");
+const recipeScraper = require("./scrapers/recipeScraper.js");
 
 const urls = [
     "http://www.eatingwell.com/recipe/264666/pressure-cooker-chicken-enchilada-soup/",

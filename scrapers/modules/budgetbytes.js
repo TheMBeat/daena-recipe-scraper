@@ -2,19 +2,22 @@ const cheerio = require("cheerio")
 
 const RecipeSchema = require("../helpers/recipe-schema")
 
-const theSpruceEats = url => {
+const budgetBytes = (url, html) => {
   const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
-    if (!url.includes("thespruceeats.com/")) {
-      reject(new Error("url provided must include 'thespruceeats.com/'"))
+    if (!url.includes("budgetbytes.com/")) {
+      reject(new Error("url provided must include 'budgetbytes.com/'"))
     } else {
+
       const $ = cheerio.load(html)
 
       Recipe.url = url
-      Recipe.imageUrl = $("meta[property='og:image']").attr("content")
-      Recipe.name = $(".heading__title").text()
 
-      $(".simple-list__item").each((i, el) => {
+      Recipe.imageUrl = $("meta[property='og:image']").attr("content")
+      Recipe.name = $(".wprm-recipe-name").text()
+
+      $(".wprm-recipe-ingredient-notes").remove()
+      $(".wprm-recipe-ingredient").each((i, el) => {
         Recipe.recipeIngredient.push(
           $(el)
           .text()
@@ -22,19 +25,21 @@ const theSpruceEats = url => {
         )
       })
 
-      $(".section-content")
-        .find("ol")
-        .find("p")
-        .each((i, el) => {
-          Recipe.recipeInstructions.push($(el).text())
-        })
+      $(".wprm-recipe-instruction-text").each((i, el) => {
+        Recipe.recipeInstructions.push($(el).text())
+      })
 
-      let metaText = $(".meta-text__data")
-      Recipe.totalTime = metaText.first().text()
-      Recipe.prepTime = $(metaText.get(1)).text()
-      Recipe.cookTime = $(metaText.get(2)).text()
+      Recipe.prepTime = $(".wprm-recipe-prep-time-label")
+        .next()
+        .text()
+      Recipe.cookTime = $(".wprm-recipe-cook-time-label")
+        .next()
+        .text()
+      Recipe.totalTime = $(".wprm-recipe-total-time-label")
+        .next()
+        .text()
 
-      Recipe.servings = metaText.last().text()
+      Recipe.recipeYield = $(".wprm-recipe-servings").text()
 
       if (
         !Recipe.name ||
@@ -43,6 +48,7 @@ const theSpruceEats = url => {
       ) {
         reject(new Error("No recipe found on page"))
       } else {
+
         var json_ld_obj = Recipe
 
         if ("@Context" in json_ld_obj === false) {
@@ -59,4 +65,4 @@ const theSpruceEats = url => {
   })
 }
 
-module.exports = theSpruceEats
+module.exports = budgetBytes

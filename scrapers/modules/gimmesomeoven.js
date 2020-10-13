@@ -2,28 +2,29 @@ const cheerio = require("cheerio")
 
 const RecipeSchema = require("../helpers/recipe-schema")
 
-const cookieAndKate = url => {
+const gimmeSomeOven = (url, html) => {
   const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
-    if (!url.includes("cookieandkate.com/")) {
-      reject(new Error("url provided must include 'cookieandkate.com/'"))
+    if (!url.includes("gimmesomeoven.com/")) {
+      reject(new Error("url provided must include 'gimmesomeoven.com/'"))
     } else {
 
       const $ = cheerio.load(html)
 
       Recipe.url = url
-      Recipe.imageUrl = $("meta[property='og:image']").attr("content")
-      Recipe.name = $(".tasty-recipes")
+      Recipe.image = $("meta[property='og:image']").attr("content")
+      Recipe.name = $(".tasty-recipes-header-content")
         .children("h2")
+        .first()
         .text()
 
-      $(".tasty-recipe-ingredients")
-        .find("h4, li")
+      $(".tasty-recipes-ingredients")
+        .find("li")
         .each((i, el) => {
           Recipe.recipeIngredient.push($(el).text())
         })
 
-      $(".tasty-recipe-instructions")
+      $(".tasty-recipes-instructions")
         .find("li")
         .each((i, el) => {
           Recipe.recipeInstructions.push($(el).text())
@@ -34,7 +35,7 @@ const cookieAndKate = url => {
       Recipe.totalTime = $(".tasty-recipes-total-time").text()
 
       $(".tasty-recipes-yield-scale").remove()
-      Recipe.servings = $(".tasty-recipes-yield")
+      Recipe.recipeYield = $(".tasty-recipes-yield")
         .text()
         .trim()
 
@@ -62,4 +63,4 @@ const cookieAndKate = url => {
   })
 }
 
-module.exports = cookieAndKate
+module.exports = gimmeSomeOven

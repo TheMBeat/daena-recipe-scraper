@@ -3,7 +3,7 @@ const cheerio = require("cheerio")
 const RecipeSchema = require("../helpers/recipe-schema")
 const baseUrl = "https://www.centraltexasfoodbank.org"
 
-const centralTexasFoodBank = url => {
+const centralTexasFoodBank = (url, html) => {
   const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
     if (!url.includes("centraltexasfoodbank.org/recipe")) {

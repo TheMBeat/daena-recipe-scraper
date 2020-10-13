@@ -2,11 +2,11 @@ const cheerio = require("cheerio")
 
 const RecipeSchema = require("../helpers/recipe-schema")
 
-const alexandraCooks = (url, html) => {
+const vegRecipesOfIndia = (url, html) => {
   const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
-    if (!url.includes("alexandracooks.com/")) {
-      reject(new Error("url provided must include 'alexandracooks.com/'"))
+    if (!url.includes("vegrecipesofindia.com/")) {
+      reject(new Error("url provided must include 'vegrecipesofindia.com/'"))
     } else {
 
       const $ = cheerio.load(html)
@@ -15,32 +15,30 @@ const alexandraCooks = (url, html) => {
       Recipe.imageUrl = $("meta[property='og:image']").attr("content")
       Recipe.name = $("meta[property='og:title']").attr("content")
 
-      $(".tasty-recipes-ingredients")
+      $(".wprm-recipe-ingredients")
         .find("li")
         .each((i, el) => {
           Recipe.recipeIngredient.push($(el).text())
         })
 
-      $(".tasty-recipes-instructions")
+      $(".wprm-recipe-instructions")
         .find("li")
         .each((i, el) => {
           Recipe.recipeInstructions.push($(el).text())
         })
 
-      Recipe.prepTime = $(".tasty-recipes-prep-time").text()
-      Recipe.cookTime = $(".tasty-recipes-cook-time").text()
-      Recipe.totalTime = $(".tasty-recipes-total-time").text()
+      Recipe.prepTime = $(".wprm-recipe-prep-time-container").find(".wprm-recipe-time").text()
+      Recipe.cookTime = $(".wprm-recipe-cook-time-container").find(".wprm-recipe-time").text()
+      Recipe.totalTime = $(".wprm-recipe-total-time-container").find(".wprm-recipe-time").text()
 
-      $(".tasty-recipes-yield-scale").remove()
-      Recipe.recipeYield = $(".tasty-recipes-yield")
+      Recipe.recipeYield = $(".wprm-recipe-servings-with-unit")
         .text()
         .trim()
 
-
-
       if (
         !Recipe.name ||
-        !Recipe.recipeIngredient.length
+        !Recipe.recipeIngredient.length ||
+        !Recipe.recipeInstructions.length
       ) {
         reject(new Error("No recipe found on page"))
       } else {
@@ -60,4 +58,4 @@ const alexandraCooks = (url, html) => {
   })
 }
 
-module.exports = alexandraCooks
+module.exports = vegRecipesOfIndia

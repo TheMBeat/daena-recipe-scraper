@@ -1,12 +1,12 @@
 const cheerio = require("cheerio")
 
-const RecipeSchema = require("../helpers/recipe-schema")
+const RecipeSchema = require("../../helpers/recipe-schema")
 
-const saveur = url => {
+const alexandraCooks = (url, html) => {
   const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
-    if (!url.includes("saveur.com/")) {
-      reject(new Error("url provided must include 'saveur.com/'"))
+    if (!url.includes("alexandracooks.com/")) {
+      reject(new Error("url provided must include 'alexandracooks.com/'"))
     } else {
 
       const $ = cheerio.load(html)
@@ -15,19 +15,28 @@ const saveur = url => {
       Recipe.imageUrl = $("meta[property='og:image']").attr("content")
       Recipe.name = $("meta[property='og:title']").attr("content")
 
-      $(".ingredient")
+      $(".tasty-recipes-ingredients")
+        .find("li")
         .each((i, el) => {
           Recipe.recipeIngredient.push($(el).text())
         })
 
-      $(".instruction")
+      $(".tasty-recipes-instructions")
+        .find("li")
         .each((i, el) => {
           Recipe.recipeInstructions.push($(el).text())
         })
 
+      Recipe.prepTime = $(".tasty-recipes-prep-time").text()
+      Recipe.cookTime = $(".tasty-recipes-cook-time").text()
+      Recipe.totalTime = $(".tasty-recipes-total-time").text()
 
-      Recipe.totalTime = $(".cook-time").text().trim().replace("Time:", "")
-      Recipe.recipeYield = $(".yield").text().trim().replace("Yield:", "").replace("serves", "")
+      $(".tasty-recipes-yield-scale").remove()
+      Recipe.recipeYield = $(".tasty-recipes-yield")
+        .text()
+        .trim()
+
+
 
       if (
         !Recipe.name ||
@@ -47,9 +56,8 @@ const saveur = url => {
 
         resolve(json_ld_obj)
       }
-
     }
   })
 }
 
-module.exports = saveur
+module.exports = alexandraCooks

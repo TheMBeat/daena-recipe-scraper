@@ -2,7 +2,7 @@ const cheerio = require("cheerio")
 
 const RecipeSchema = require("../helpers/recipe-schema")
 
-const smittenKitchen = url => {
+const smittenKitchen = (url, html) => {
   const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
     if (!url.includes("smittenkitchen.com/")) {

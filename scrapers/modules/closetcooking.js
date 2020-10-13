@@ -3,7 +3,7 @@ const cheerio = require("cheerio")
 const RecipeSchema = require("../helpers/recipe-schema")
 const puppeteerFetch = require("../helpers/puppeteerFetch")
 
-const closetCooking = url => {
+const closetCooking = (url, html) => {
   return new Promise(async (resolve, reject) => {
     if (!url.includes("closetcooking.com/")) {
       reject(new Error("url provided must include 'closetcooking.com/'"))

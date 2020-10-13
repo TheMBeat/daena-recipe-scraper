@@ -2,36 +2,39 @@ const cheerio = require("cheerio")
 
 const RecipeSchema = require("../helpers/recipe-schema")
 
-const vegRecipesOfIndia = url => {
+const cookieAndKate = (url, html) => {
   const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
-    if (!url.includes("vegrecipesofindia.com/")) {
-      reject(new Error("url provided must include 'vegrecipesofindia.com/'"))
+    if (!url.includes("cookieandkate.com/")) {
+      reject(new Error("url provided must include 'cookieandkate.com/'"))
     } else {
 
       const $ = cheerio.load(html)
 
       Recipe.url = url
       Recipe.imageUrl = $("meta[property='og:image']").attr("content")
-      Recipe.name = $("meta[property='og:title']").attr("content")
+      Recipe.name = $(".tasty-recipes")
+        .children("h2")
+        .text()
 
-      $(".wprm-recipe-ingredients")
-        .find("li")
+      $(".tasty-recipe-ingredients")
+        .find("h4, li")
         .each((i, el) => {
           Recipe.recipeIngredient.push($(el).text())
         })
 
-      $(".wprm-recipe-instructions")
+      $(".tasty-recipe-instructions")
         .find("li")
         .each((i, el) => {
           Recipe.recipeInstructions.push($(el).text())
         })
 
-      Recipe.prepTime = $(".wprm-recipe-prep-time-container").find(".wprm-recipe-time").text()
-      Recipe.cookTime = $(".wprm-recipe-cook-time-container").find(".wprm-recipe-time").text()
-      Recipe.totalTime = $(".wprm-recipe-total-time-container").find(".wprm-recipe-time").text()
+      Recipe.prepTime = $(".tasty-recipes-prep-time").text()
+      Recipe.cookTime = $(".tasty-recipes-cook-time").text()
+      Recipe.totalTime = $(".tasty-recipes-total-time").text()
 
-      Recipe.recipeYield = $(".wprm-recipe-servings-with-unit")
+      $(".tasty-recipes-yield-scale").remove()
+      Recipe.servings = $(".tasty-recipes-yield")
         .text()
         .trim()
 
@@ -54,8 +57,9 @@ const vegRecipesOfIndia = url => {
 
         resolve(json_ld_obj)
       }
+
     }
   })
 }
 
-module.exports = vegRecipesOfIndia
+module.exports = cookieAndKate
