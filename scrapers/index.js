@@ -38,7 +38,7 @@ const domains = {
   //"sallys-blog": require("./sallys-blog") //TODO: Scraper schreiben
 };
 
-const defaultDomain = require("./fallback")
+const fallback = require("./fallback")
 
 /*
  * 1. Seite Parsen
@@ -110,7 +110,7 @@ function getJson(myUrl, callback, resolve, reject) {
           }
         }
       }
-      return callback(myUrl, resolve, reject)
+      return callback(myUrl, html, resolve, reject)
     } 
     else 
     {
@@ -120,16 +120,16 @@ function getJson(myUrl, callback, resolve, reject) {
   })
 }
 
-function parseRecipe(myUrl, resolve, reject) {
+function parseRecipe(myUrl, html, resolve, reject) {
   let parse = parseDomain(myUrl)
 
   if (parse) {
     let domain = parse.domain;
     if (domains[domain] !== undefined) {
-      resolve(domains[domain](myUrl))
+      resolve(domains[domain](myUrl, html))
 
     } else {
-      resolve(defaultDomain(myUrl))
+      resolve(fallback(myUrl, html))
     }
   } else {
     reject(new Error("Failed to parse domain"))
