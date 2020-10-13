@@ -50,18 +50,18 @@ const urls = [
 ]
 
 
-urls.forEach(element => {
-    // using Promise chaining
-    recipeScraper(element).then(recipe => {
-        console.log(JSON.stringify(recipe, undefined, 2))
-    }).catch(error => {
-        console.log(error)
-    });
-});
-
-// recipeScraper(urls[37]).then(recipe => {
-//     console.log(JSON.stringify(recipe, undefined, 2))
-// }).catch(error => {
-//     console.log(error)
+// urls.forEach(element => {
+//     // using Promise chaining
+//     recipeScraper(element).then(recipe => {
+//         console.log(JSON.stringify(recipe, undefined, 2))
+//     }).catch(error => {
+//         console.log(error)
+//     });
 // });
+
+recipeScraper(urls[2]).then(recipe => {
+    console.log(JSON.stringify(recipe, undefined, 2))
+}).catch(error => {
+    console.log(error)
+});
 

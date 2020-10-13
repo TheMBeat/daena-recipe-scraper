@@ -1,74 +1,68 @@
-const request = require("request");
-const cheerio = require("cheerio");
+const cheerio = require("cheerio")
 
-const RecipeSchema = require("../helpers/recipe-schema");
+const RecipeSchema = require("../helpers/recipe-schema")
 
 const budgetBytes = url => {
-  const Recipe = new RecipeSchema();
+  const Recipe = new RecipeSchema()
   return new Promise((resolve, reject) => {
     if (!url.includes("budgetbytes.com/")) {
-      reject(new Error("url provided must include 'budgetbytes.com/'"));
+      reject(new Error("url provided must include 'budgetbytes.com/'"))
     } else {
-      request(url, (error, response, html) => {
-        if (!error && response.statusCode === 200) {
-          const $ = cheerio.load(html);
 
-          Recipe.url = url
+      const $ = cheerio.load(html)
 
-          Recipe.imageUrl = $("meta[property='og:image']").attr("content");
-          Recipe.name = $(".wprm-recipe-name").text();
+      Recipe.url = url
 
-          $(".wprm-recipe-ingredient-notes").remove();
-          $(".wprm-recipe-ingredient").each((i, el) => {
-            Recipe.recipeIngredient.push(
-              $(el)
-              .text()
-              .trim()
-            );
-          });
+      Recipe.imageUrl = $("meta[property='og:image']").attr("content")
+      Recipe.name = $(".wprm-recipe-name").text()
 
-          $(".wprm-recipe-instruction-text").each((i, el) => {
-            Recipe.recipeInstructions.push($(el).text());
-          });
+      $(".wprm-recipe-ingredient-notes").remove()
+      $(".wprm-recipe-ingredient").each((i, el) => {
+        Recipe.recipeIngredient.push(
+          $(el)
+          .text()
+          .trim()
+        )
+      })
 
-          Recipe.prepTime = $(".wprm-recipe-prep-time-label")
-            .next()
-            .text();
-          Recipe.cookTime = $(".wprm-recipe-cook-time-label")
-            .next()
-            .text();
-          Recipe.totalTime = $(".wprm-recipe-total-time-label")
-            .next()
-            .text();
+      $(".wprm-recipe-instruction-text").each((i, el) => {
+        Recipe.recipeInstructions.push($(el).text())
+      })
 
-          Recipe.recipeYield = $(".wprm-recipe-servings").text();
+      Recipe.prepTime = $(".wprm-recipe-prep-time-label")
+        .next()
+        .text()
+      Recipe.cookTime = $(".wprm-recipe-cook-time-label")
+        .next()
+        .text()
+      Recipe.totalTime = $(".wprm-recipe-total-time-label")
+        .next()
+        .text()
 
-          if (
-            !Recipe.name ||
-            !Recipe.recipeIngredient.length ||
-            !Recipe.recipeInstructions.length
-          ) {
-            reject(new Error("No recipe found on page"));
-          } else {
+      Recipe.recipeYield = $(".wprm-recipe-servings").text()
 
-            var json_ld_obj = Recipe
-            
-            if ("@Context" in json_ld_obj === false) {
-              json_ld_obj["@Context"] = "http:\/\/schema.org"
-            }
+      if (
+        !Recipe.name ||
+        !Recipe.recipeIngredient.length ||
+        !Recipe.recipeInstructions.length
+      ) {
+        reject(new Error("No recipe found on page"))
+      } else {
 
-            if (!"@type" in json_ld_obj === false) {
-              json_ld_obj["@type"] = "Recipe"
-            }
+        var json_ld_obj = Recipe
 
-            resolve(json_ld_obj)
-          }
-        } else {
-          reject(new Error("No recipe found on page"));
+        if ("@Context" in json_ld_obj === false) {
+          json_ld_obj["@Context"] = "http:\/\/schema.org"
         }
-      });
-    }
-  });
-};
 
-module.exports = budgetBytes;
+        if (!"@type" in json_ld_obj === false) {
+          json_ld_obj["@type"] = "Recipe"
+        }
+
+        resolve(json_ld_obj)
+      }
+    }
+  })
+}
+
+module.exports = budgetBytes

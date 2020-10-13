@@ -1,4 +1,3 @@
-//const request = require("request")
 const cheerio = require("cheerio")
 
 const RecipeSchema = require("../helpers/recipe-schema")
@@ -6,8 +5,7 @@ const RecipeSchema = require("../helpers/recipe-schema")
 const defaultDomain = (url, html) => {
     const Recipe = new RecipeSchema()
     return new Promise((resolve, reject) => {
-        //request(url, (error, response, html) => {
-            // if (!error && response.statusCode === 200) {
+
                 const $ = cheerio.load(html);
 
                 Recipe.url = url
@@ -311,12 +309,6 @@ const defaultDomain = (url, html) => {
                 }
 
                 resolve(json_ld_obj)
-                // }
-            // } else {
-            //     console.log("SERVER RESPONSE: ", response.statusCode)
-            //     reject(new Error("Server error"))
-            // }
-        //})
     })
 }
 

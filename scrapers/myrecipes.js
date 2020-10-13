@@ -1,4 +1,3 @@
-const request = require("request")
 const cheerio = require("cheerio")
 
 const RecipeSchema = require("../helpers/recipe-schema")
@@ -9,8 +8,6 @@ const myRecipes = url => {
     if (!url.includes("myrecipes.com/recipe")) {
       reject(new Error("url provided must include 'myrecipes.com/recipe'"))
     } else {
-      request(url, (error, response, html) => {
-        if (!error && response.statusCode === 200) {
           const $ = cheerio.load(html)
 
           Recipe.url = url
@@ -68,10 +65,7 @@ const myRecipes = url => {
 
             resolve(json_ld_obj)
           }
-        } else {
-          reject(new Error("No recipe found on page"))
-        }
-      })
+        
     }
   })
 }
