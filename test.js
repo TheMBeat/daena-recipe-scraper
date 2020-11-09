@@ -1,6 +1,6 @@
 ﻿
 // import the module
-const recipeScraper = require("./scrapers/recipeScraper.js");
+const recipeScraper = require("./scraper/recipeScraper.js");
 
 const urls = [
     "http://www.eatingwell.com/recipe/264666/pressure-cooker-chicken-enchilada-soup/",
@@ -31,7 +31,7 @@ const urls = [
     "https://www.epicurious.com/recipes/food/views/trout-toast-with-soft-scrambled-eggs",
     "https://www.food.com/recipe/oatmeal-raisin-cookies-35813",
     "https://www.foodandwine.com/recipes/french-onion-soup-ludo-lefebvre",
-    "https://www.foodnetwork.com/recipes/food-network-kitchen/  cast-iron-skillet-provencal-pork-chops-and-potatoes-3542642",
+    "https://foodnetwork.co.uk/recipes/pork-chops-creamy-champagne-sauce-rustic-garlic-mashed-potatoes/",
     "https://www.kitchenstories.com/en/recipes/chorizo-breakfast-tacos-with-salsa-verde",
     "https://www.maangchi.com/recipe/dakgalbi",
     "https://www.myrecipes.com/recipe/London-broil-roasted-garlic-aioli",
@@ -50,18 +50,18 @@ const urls = [
 ]
 
 
-// urls.forEach(element => {
-//     // using Promise chaining
-//     recipeScraper(element).then(recipe => {
-//         console.log(JSON.stringify(recipe, undefined, 2))
-//     }).catch(error => {
-//         console.log(error)
-//     });
-// });
-
-recipeScraper(urls[41]).then(recipe => {
-    console.log(JSON.stringify(recipe, undefined, 2))
-}).catch(error => {
-    console.log(error)
+urls.forEach(element => {
+    // using Promise chaining
+    recipeScraper(element).then(recipe => {
+        console.log(JSON.stringify(recipe, undefined, 2))
+    }).catch(error => {
+        console.log(error)
+    });
 });
+
+// recipeScraper(urls[41]).then(recipe => {
+//     console.log(JSON.stringify(recipe, undefined, 2))
+// }).catch(error => {
+//     console.log(error)
+// });
 
